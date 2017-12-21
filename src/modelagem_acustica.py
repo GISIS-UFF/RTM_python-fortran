@@ -1,14 +1,9 @@
-
 import numpy as np
 import matplotlib.pylab as pl
 import time
+import fortransubroutines
 
 start_time = time.time()
-
-
-
-#import op_nsg
-
 
 # Variaveis 
 
@@ -51,7 +46,7 @@ pl.show()
 
 #op_nsg.operador_quarta_ordem(h,dt,C,Pc,Pf)
 
-#op_nsg.wavelet(1,dt,1,f_corte)
+fortransubroutines.wavelet(1,dt,1,f_corte)
 
 #W  = 'wavelet_ricker.dat'
 
