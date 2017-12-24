@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 def readbinaryfile(dim1,dim2,filename):
       """
       readbinaryfile - Functions that read a binary file.
@@ -59,6 +60,17 @@ if __name__ == '__main__':
       
       start_time = time.time()
 =======
+=======
+import numpy as np
+import matplotlib.pylab as pl
+import time
+#import fortransubroutines
+
+start_time = time.time()
+
+# Variaveis 
+
+>>>>>>> Plot da Wavelet adicionado
 Nx = 383                    # Numero de pontos no Grid (x)
 Nz = 141                    # Numero de pontos no Grid (z)
 h  = 10                     # Espacamento do Grid
@@ -77,6 +89,7 @@ with open(filename, 'rb') as f:
       data = np.fromfile(f, dtype=np.float32, count= Nz*Nx)
       C = np.reshape(data, [Nz, Nx], order='F')
 
+pl.figure(1)	  
 pl.imshow(C,cmap='jet')
 pl.colorbar()
 pl.show()
@@ -90,6 +103,7 @@ pl.show()
 #fortransubroutines.operador_quarta_ordem(h,dt,C,Pc,Pf)
 >>>>>>> Tentativa de abrir o arquivo wavelet_ricker.dat adicionada; Não deu para testar devido a problemas da f2py no Windows
 
+<<<<<<< HEAD
       main() # Call main function
 
 <<<<<<< HEAD
@@ -97,9 +111,17 @@ pl.show()
       print ("Tempo de processamento python = ", elapsed_time_python,"s")
 =======
 # Abrindo o arquivo wavelet.dat criado 
+=======
+#fortransubroutines.wavelet(1,dt,1,f_corte)
 
-wavelet = np.fromfile('wavelet_ricker.dat',dtype=float)
-pl.plot(wavelet)
+# Lendo o arquivo wavelet.dat criado e armazenando em dois vetores: X,Y
+>>>>>>> Plot da Wavelet adicionado
+
+X,Y = np.loadtxt('wavelet_ricker.dat', unpack = True)
+
+pl.figure(2)
+pl.plot(X,Y)
+pl.show()
 
 
 >>>>>>> Tentativa de abrir o arquivo wavelet_ricker.dat adicionada; Não deu para testar devido a problemas da f2py no Windows
