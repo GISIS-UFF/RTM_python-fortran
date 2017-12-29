@@ -120,7 +120,7 @@ pl.show()
 X,Y = np.loadtxt('wavelet_ricker.dat', unpack = True)
 
 pl.figure(2)
-pl.plot(X,Y)
+pl.plot(X,Y, color = 'k')
 pl.show()
 
 
