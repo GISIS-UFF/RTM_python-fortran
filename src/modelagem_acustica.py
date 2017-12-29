@@ -47,11 +47,11 @@ def main():
       '''
       
       import parametro      
-      #from fortransubroutines import wavelet
+      from fortransubroutines import wavelet
 
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.filename)
 
-      #wavelet(1,parametro.dt,1,parametro.f_corte)
+      wavelet(1,parametro.dt,1,parametro.f_corte)
       
       fonte = plotgraphics('wavelet_ricker.dat', 'k')
 
