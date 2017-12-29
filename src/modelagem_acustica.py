@@ -17,6 +17,29 @@ def readbinaryfile(dim1,dim2,filename):
       pl.draw() # drawing figure to be plotted later
       
       return matrix
+  
+    
+def plotgraphics(filename,color):
+    
+    """
+    
+    plotgraphics - Function that read a file and plot a graphic.
+    
+    REMEMBER: The function 'np.loadtxt' only can be used with files written
+              with dot 
+    
+    """
+    
+    X,Y = np.loadtxt(filename, unpack = True)
+
+    pl.figure()
+    pl.plot(X,Y, c = color)
+    pl.draw()
+    
+    return 
+    
+    
+        
       
 def main():      
       '''
@@ -29,25 +52,20 @@ def main():
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.filename)
 
       wavelet(1,parametro.dt,1,parametro.f_corte)
-
-      # Matrizes Simples Aleatorias 
-
-      # C = np.ones((Nz,Nx))
-      # Pc = np.random.rand(Nz,Nx)
-      # Pf = np.random.rand(Nz,Nx)
+      
+      fonte = plotgraphics('wavelet_ricker.dat', 'k')
 
       # Loop do Tempo
       
       #* Colocar depois
+      
       # Operador de Diferencas Finitas de Quarta Ordem      
       #op_nsg.operador_quarta_ordem(h,dt,C,Pc,Pf)
 
 
-
-#W  = 'wavelet_ricker.dat'
-
       
 if __name__ == '__main__':
+    
       """
       Structure prepared for object-oriented programming
       """
@@ -58,10 +76,13 @@ if __name__ == '__main__':
       
       start_time = time.time()
 
+
       main() # Call main function
+
 
       elapsed_time_python = time.time() - start_time
       print ("Tempo de processamento python = ", elapsed_time_python,"s")
+
 
       pl.show() # Showing all figures draw
 
