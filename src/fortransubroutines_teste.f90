@@ -123,3 +123,58 @@ SUBROUTINE wavelet(switch,dtime,MaxAmp,freqcut)
     end select
     close(77)
 END SUBROUTINE wavelet
+
+
+!***********************************************************************************
+!************************* Modelagem ***********************************************
+!***********************************************************************************
+
+SUBROUTINE modelagem(k,Nz,Nx,nt,dh,dt,vel,P,Pf,Fx,Fz)
+
+	IMPLICIT NONE
+
+    INTEGER                      :: k, Fx, Fz, zi               ! counter, Source Position, zi -> profundidade dos receptores
+	 INTEGER                      :: i,j					      !
+    INTEGER,INTENT(in)           :: Nx,Nz                   ! Grid Elements
+    REAL                         :: t, aux, fc              ! delay time and auxiliar
+    REAL                         :: fonte, amort            ! initial time and wavelet
+    REAL,INTENT(in)              :: nt,dh,dt
+	 REAL, DIMENSION(Nz,Nx)       :: aux_vel
+    REAL, DIMENSION(Nz,Nx)       :: vel                     ! model
+    REAL, DIMENSION(Nz,Nx)       :: P                       !Pressure Matrix
+    REAL, DIMENSION(Nz,Nx)       :: Pf
+
+	aux_vel = (vel*vel)*(dt*dt)/(12*(dh*dh))  ! Remove it. Wasting cpu time
+   zi = 3              
+do k = 1,nt	
+
+	if k .le. size(fonte) - 1
+		P(Fz,Fx) = P(Fz,Fx) + gauss(int(k))
+		
+	end if
+
+!Chamando a subrotina operador_quarta_ordem
+	call operador_quarta_ordem(Nz,Nx,dh,dt,vel,P,Pf)
+    
+!Chamando a Subrotina bordas_cerjan    
+   call bordas_cerjan() 
+	
+   !Troca de Matrizes
+   P = P 
+   P = Pf
+   
+! Sismsograma
+    
+       
+   do j = 0,Nx
+                              
+        Sismo(k,j) = Pf(zi,j)
+        
+   end do
+   
+end do   
+        
+   
+	
+END SUBROUTINE modelagem	
+	

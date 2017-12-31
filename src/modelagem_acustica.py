@@ -74,6 +74,7 @@ def main():
       
       import parametro      
       #from fortransubroutines import wavelet
+      #from fortransubroutines import modelagem
 
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.filename)
 
@@ -81,20 +82,23 @@ def main():
       
       plotgraphics(2,'wavelet_ricker.dat', 'k')
       
-      f_amort = amort(parametro.fat,parametro.nat)
+      amort(parametro.fat,parametro.nat)
       
-      plotgraphics(1,'f_amort.dat', 'm')
+      plotgraphics(1,'f_amort.dat', 'k')
+      
+      ## Subrotina de Modelagem
+      
+      snapshots = raw_input("Deseja salvar snapshots(y or n): ")
+      
+      if snapshots == 'y':
+          print 'deu bom!'
+          #from fortransubroutines import snapshots
+          
+      #modelagem(C, ....)
       
       
-
-      # Loop do Tempo
       
-      #* Colocar depois
       
-      # Operador de Diferencas Finitas de Quarta Ordem      
-      #op_nsg.operador_quarta_ordem(h,dt,C,Pc,Pf)
-
-
       
 if __name__ == '__main__':
     
@@ -113,7 +117,7 @@ if __name__ == '__main__':
 
 
       elapsed_time_python = time.time() - start_time
-      print ("Tempo de processamento python = ", elapsed_time_python,"s")
+      print ("Tempo de processamento python = ", elapsed_time_python, "s")
 
 
       pl.show() # Showing all figures draw
