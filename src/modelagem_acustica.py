@@ -18,8 +18,8 @@ def readbinaryfile(dim1,dim2,filename):
       
       return matrix
   
-    
-def plotgraphics(filename,color):
+
+def plotgraphics(ID,filename,color):
         
         """
     
@@ -31,15 +31,15 @@ def plotgraphics(filename,color):
          """
         
         
-        if filename == 'wavelet_ricker.dat':
-    
+        if ID == 2:
+             
             X,Y = np.loadtxt(filename, unpack = True)
 
             pl.figure()
             pl.plot(X,Y, c = color)
             pl.draw()
         
-        if filename == 'f_amort.dat':
+        if ID == 1:
             
             X = np.loadtxt(filename, unpack = True)
 
@@ -79,11 +79,11 @@ def main():
 
       #wavelet(1,parametro.dt,1,parametro.f_corte)
       
-      plotgraphics('wavelet_ricker.dat', 'k')
+      plotgraphics(2,'wavelet_ricker.dat', 'k')
       
       f_amort = amort(parametro.fat,parametro.nat)
       
-      plotgraphics('f_amort.dat', 'm')
+      plotgraphics(1,'f_amort.dat', 'm')
       
       
 
