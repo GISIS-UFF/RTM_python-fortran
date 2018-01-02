@@ -17,8 +17,21 @@ def readbinaryfile(dim1,dim2,filename):
       pl.draw() # drawing figure to be plotted later
       
       return matrix
-  
-
+ 
+def estabilidade(C,h,beta,dt):
+    
+    if dt > h / beta * np.max(np.max(C)):
+        print "Erro de estabilidade"  
+    else:
+        print "Condicao de estabilidade satisfeita"
+    
+def dispersao(C,h,alfa,f_corte):
+    
+    if h > np.min(np.min(C)) / (alfa * f_corte):
+        print "Erro de dispersao numerica"   
+    else:
+        print "Condicao de nao dispersao satisfeita"
+   
 def plotgraphics(ID,filename,color):
         
         """
@@ -27,6 +40,8 @@ def plotgraphics(ID,filename,color):
     
             REMEMBER: The function 'np.loadtxt' only can be used with files written
               with dot 
+              
+              ID = number of columns of the file
     
          """
         
@@ -75,26 +90,46 @@ def main():
       import parametro      
       #from fortransubroutines import wavelet
       #from fortransubroutines import modelagem
+      
+      
+      # Modelo de Velocidade
 
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.filename)
-
+          
+      
+      # Condicao de estabilidade e dispersao
+      
+      estabilidade(C,parametro.h,parametro.beta,parametro.dt)
+      dispersao(C,parametro.h,parametro.alfa,parametro.f_corte)
+      
+      # Fonte Sismica
+      
       #wavelet(1,parametro.dt,1,parametro.f_corte)
       
       plotgraphics(2,'wavelet_ricker.dat', 'k')
+      
+      
+      # Funcao Amortecedora
       
       amort(parametro.fat,parametro.nat)
       
       plotgraphics(1,'f_amort.dat', 'k')
       
-      ## Subrotina de Modelagem
+      # Modelagem
       
       snapshots = raw_input("Deseja salvar snapshots(y or n): ")
       
       if snapshots == 'y':
-          print 'deu bom!'
+          
+          Nsnap = input("Quantos Snapshots?")
+          
+          print Nsnap
           #from fortransubroutines import snapshots
           
-      #modelagem(C, ....)
+          #snapshots(Nsnap,parametro.nt)
+          
+          # Ver como fazer essa subrotina no Fortran (ex: Dentro da subrotina de modelagem ou criando uma nova subrotina)
+      #modelagem(parametro.nt, parametro.Fx, parametro.Fz)
       
       
       
