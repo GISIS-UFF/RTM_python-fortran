@@ -88,8 +88,8 @@ def main():
       '''
       
       import parametro      
-      #from fortransubroutines import wavelet
-      #from fortransubroutines import modelagem
+      from fortransubroutines import wavelet
+      from fortransubroutines import modelagem
       
       
       # Modelo de Velocidade
@@ -104,7 +104,7 @@ def main():
       
       # Fonte Sismica
       
-      #wavelet(1,parametro.dt,1,parametro.f_corte)
+      wavelet(1,parametro.dt,1,parametro.f_corte)
       
       plotgraphics(2,'wavelet_ricker.dat', 'k')
       
@@ -124,12 +124,12 @@ def main():
           Nsnap = input("Quantos Snapshots?")
           
           print Nsnap
-          #from fortransubroutines import snapshots
+          from fortransubroutines import snapshots
           
-          #snapshots(Nsnap,parametro.nt)
+          snapshots(Nsnap,parametro.nt)
           
-          # Ver como fazer essa subrotina no Fortran (ex: Dentro da subrotina de modelagem ou criando uma nova subrotina)
-      #modelagem(parametro.nt, parametro.Fx, parametro.Fz)
+          
+      modelagem(parametro.nt, parametro.Fx, parametro.Fz)
       
       
       

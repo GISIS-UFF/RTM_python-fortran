@@ -45,19 +45,43 @@ do k = 1,nt
    P = P 
    P = Pf
    
-! Sismograma
+   subroutine snapshots(Nsnap,nt)
+   
+   
+   
+    if k % int(nt/Nsnap) == 0
+      
+        character(len=90) :: filename
+                 
+              fileloop: do j = 1, Nsnap
+              
+                write(filename, 'snapshot',I1,'.dat') j 
+                      
+                open(unit = j, status = 'old', file = filename)
+                
+                close j
+                
+              end do fileloop
+                
+    end if
+    
+   end subroutine snapshots
+        
+! Sismogramas
     
        
-   !do j = 0,Nx
+   do j = 0,Nx
                               
-    !    Sismo(k,j) = Pf(zi,j)
+        Sismo(k,j) = Pf(zi,j)
         
-  ! end do
+   end do
    
-   ! Save Sismogramas
+! Salvando Sismogramas
    
-   !open(77, file='Sismograma.dat',&
-    !     status='unknown',form='formatted')
+   open(2, file='Sismograma.dat',&
+         status='unknown',form='formatted')
+   
+   write(2,*) Sismo
    
 end do   
         
