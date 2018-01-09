@@ -2,7 +2,7 @@
 !************************* Modelagem ***********************************************
 !***********************************************************************************
 
-SUBROUTINE modelagem(Nx,Nz,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte)  
+SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte)  
   IMPLICIT NONE  
 
   INTEGER                      :: k
@@ -34,11 +34,11 @@ SUBROUTINE modelagem(Nx,Nz,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte)
 
      CALL Updatefield(Nz,Nx,P,Pf)
 
-     ! Revisar posicionamento dos receptore
-     Seism(k,:) = P(:,10)
+     ! Revisar posicionamento dos receptores
+     Seism(k,:) = P(10,:)
   end do
   
-  CALL Seismogram(Nt,Nx,shot,"teste","../sismograma/",Seism)
+  CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
 
 
 END SUBROUTINE modelagem
@@ -269,16 +269,22 @@ SUBROUTINE Seismogram(Ntime,Nxspace,Nshot,outfilename,select_folder,Seismmatrix)
   IMPLICIT NONE
 
   CHARACTER(len=3)                               :: num_shot           ! write differents files
-  CHARACTER(LEN=20),INTENT(in)                   :: select_folder      ! folder
+  CHARACTER(LEN=*),INTENT(in)                    :: select_folder      ! folder
   INTEGER,INTENT(in)                             :: Nxspace,Ntime      ! Total Number of Samples in Space and Time
   INTEGER,INTENT(in)                             :: Nshot              ! Number of Shot and ID processor
-  CHARACTER(LEN=40),INTENT(in)                   :: outfilename        ! output filename pattern
+  CHARACTER(LEN=*),INTENT(in)                    :: outfilename        ! output filename pattern
   REAL, DIMENSION(Ntime,Nxspace),INTENT(in)      :: Seismmatrix        ! Seismogram
 
   write(num_shot,"(i3.3)")Nshot ! write shot counter in string to write differentes Seismograms
   
-  OPEN(11, FILE=trim(select_folder)//trim(outfilename)//'_Seismogram'//num_shot//'.bin', STATUS='unknown',&
+  write(*,*) outfilename
+
+  OPEN(11, FILE=trim(select_folder)//trim(outfilename)//'_sismograma'//num_shot//'.bin', STATUS='unknown',&
        &FORM='unformatted',ACCESS='direct', RECL=(Ntime*Nxspace*4))
+
+ ! OPEN(11, FILE=trim(select_folder)//'sismograma'//num_shot //'.bin', STATUS='unknown',&
+ !       &FORM='unformatted',ACCESS='direct', RECL=(Ntime*Nxspace*4))
+
   write(11,rec=1) Seismmatrix
   CLOSE(11)
 

@@ -1,20 +1,20 @@
-def readbinaryfile(dim1,dim2,modeloreal):
+def readbinaryfile(dim1,dim2,filename):
       """
       readbinaryfile - Functions that read a binary file.
       Usage
       Input:
       dim1     = Number of sample of 1st Dimension
       dim2     = Number of sample of 2nd Dimension
-      modeloreal = path of binary file
+      filename = path of binary file
       Output:
       
       """
-      with open(modeloreal, 'rb') as f:    
+      with open(filename, 'rb') as f:    
             data   = np.fromfile(f, dtype=np.float32, count= dim1*dim2)
             matrix = np.reshape(data, [dim1,dim2], order='F')
-      pl.imshow(matrix,cmap='jet')
-      pl.colorbar()
-      pl.draw() # drawing figure to be plotted later
+      # pl.imshow(matrix,cmap='jet')
+      # pl.colorbar()
+      # pl.draw() # drawing figure to be plotted later
       
       return matrix
  
@@ -122,13 +122,19 @@ def main():
       # Modelagem
       
       Fx = int(parametro.Nx/2)               # Posicao da Fonte (x)
-      Fz = int(parametro.Nz/2)             # Possicao da Fonte (z)
-      shot = 1
+      Fz = int(parametro.Nz/2)               # Posicao da Fonte (z)
+      shot = 1                               # Numero do tiro 
 
-      modelagem(parametro.Nx,parametro.Nz,parametro.Nt,parametro.h,parametro.dt,\
+      modelagem(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,\
                 shot,Fx,Fz,fonte,Nfonte)
                
-      
+      Sismograma = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma/Marmousi_sismograma001.bin")
+ 
+
+      pl.imshow(Sismograma,extent=[0,parametro.Nt,1,parametro.Nx],aspect=100)    
+      pl.imshow(Sismograma,aspect="auto",cmap = pl.cm.gray)    
+      pl.show()
+
 if __name__ == '__main__':
     
       """
@@ -147,7 +153,7 @@ if __name__ == '__main__':
 
       elapsed_time_python = time.time() - start_time
       print ("Tempo de processamento python = ", elapsed_time_python, "s")
-
+    
 
       pl.show() # Showing all figures draw
 
