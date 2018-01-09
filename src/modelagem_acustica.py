@@ -1,15 +1,15 @@
-def readbinaryfile(dim1,dim2,filename):
+def readbinaryfile(dim1,dim2,modeloreal):
       """
       readbinaryfile - Functions that read a binary file.
       Usage
       Input:
       dim1     = Number of sample of 1st Dimension
       dim2     = Number of sample of 2nd Dimension
-      filename = path of binary file
+      modeloreal = path of binary file
       Output:
       
       """
-      with open(filename, 'rb') as f:    
+      with open(modeloreal, 'rb') as f:    
             data   = np.fromfile(f, dtype=np.float32, count= dim1*dim2)
             matrix = np.reshape(data, [dim1,dim2], order='F')
       pl.imshow(matrix,cmap='jet')
@@ -21,7 +21,8 @@ def readbinaryfile(dim1,dim2,filename):
 def estabilidade(C,h,beta,dt):
     
     if dt > h / beta * np.max(np.max(C)):
-        print "Erro de estabilidade"  
+        print "Erro de estabilidade" 
+        # Inserir condicao de parada
     else:
         print "Condicao de estabilidade satisfeita"
     
@@ -29,6 +30,7 @@ def dispersao(C,h,alfa,f_corte):
     
     if h > np.min(np.min(C)) / (alfa * f_corte):
         print "Erro de dispersao numerica"   
+        # Inserir condicao de parada
     else:
         print "Condicao de nao dispersao satisfeita"
    
@@ -94,7 +96,7 @@ def main():
       
       # Modelo de Velocidade
 
-      C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.filename)
+      C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
           
       
       # Condicao de estabilidade e dispersao
@@ -108,7 +110,9 @@ def main():
       
       plotgraphics(2,'wavelet_ricker.dat', 'k')
       
-      
+      lixo, fonte = np.loadtxt('wavelet_ricker.dat', unpack = True)
+      Nfonte      = np.size(fonte)
+
       # Funcao Amortecedora
       
       amort(parametro.fat,parametro.nat)
@@ -117,23 +121,13 @@ def main():
       
       # Modelagem
       
-      snapshots = raw_input("Deseja salvar snapshots(y or n): ")
-      
-      if snapshots == 'y':
-          
-          Nsnap = input("Quantos Snapshots?")
-          
-          print Nsnap
-          from fortransubroutines import snapshots
-          
-          snapshots(Nsnap,parametro.nt)
-          
-          
-      modelagem(parametro.nt, parametro.Fx, parametro.Fz)
-      
-      
-      
-      
+      Fx = int(parametro.Nx/2)               # Posicao da Fonte (x)
+      Fz = int(parametro.Nz/2)             # Possicao da Fonte (z)
+      shot = 1
+
+      modelagem(parametro.Nx,parametro.Nz,parametro.Nt,parametro.h,parametro.dt,\
+                shot,Fx,Fz,fonte,Nfonte)
+               
       
 if __name__ == '__main__':
     
