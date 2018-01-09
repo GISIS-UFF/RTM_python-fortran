@@ -1,4 +1,81 @@
 !***********************************************************************************
+!************************* Modelagem ***********************************************
+!***********************************************************************************
+
+SUBROUTINE modelagem(r,nt,Fx,Fz)
+
+	IMPLICIT NONE
+    
+   CHARACTER                    :: r
+   INTEGER                      :: k, Fx, Fz, zi           ! counter, Source Position
+   INTEGER                      :: i,j					      !
+   INTEGER,INTENT(in)           :: Nx,Nz                   ! Grid Elements
+   REAL                         :: t, aux, fc              ! delay time and auxiliar
+   REAL                         :: fonte, amort            ! initial time and wavelet
+   REAL,INTENT(in)              :: nt,dh,dt
+   REAL, DIMENSION(Nz,Nx)       :: aux_vel
+   REAL, DIMENSION(Nz,Nx)       :: vel                     ! model
+   REAL, DIMENSION(Nz,Nx)       :: P                       !Pressure Matrix
+   REAL, DIMENSION(Nz,Nx)       :: Pf
+
+   zi = 3 ! Profundidade dos receptores
+   
+   open(10, file = 'wavelet_ricker.dat')
+   
+   fonte = read(10,*)
+   
+   
+              
+do k = 1,nt	
+
+	if k .le. size(fonte) - 1
+               
+		P(Fz,Fx) = P(Fz,Fx) + fonte(int(k))
+		
+	end if
+
+!Chamando a subrotina operador_quarta_ordem
+
+	call operador_quarta_ordem(Nz,Nx,dh,dt,vel,P,Pf)
+    
+!Chamando a Subrotina bordas_cerjan    
+
+  ! call bordas_cerjan( ) 
+	
+   !Troca de Matrizes
+   P = P 
+   P = Pf
+   
+   if r == 'y'
+   
+       call snapshots(Nsnap,nt)
+
+! Sismogramas
+    
+       
+   do j = 0,Nx
+                              
+        Sismo(k,j) = Pf(zi,j)
+        
+   end do
+   
+! Salvando Sismogramas
+   
+   open(2, file='Sismograma.dat',&
+         status='unknown',form='formatted')
+   
+   write(2,*) Sismo
+   
+end do   
+        
+   
+	
+END SUBROUTINE modelagem	
+
+
+
+
+!***********************************************************************************
 !************************* 4nd ORDER OPERATOR IN SPACE****************************
 !***********************************************************************************  
 SUBROUTINE operador_quarta_ordem(Nz,Nx,dh,dt,vel,P,Pf)
@@ -8,7 +85,7 @@ SUBROUTINE operador_quarta_ordem(Nz,Nx,dh,dt,vel,P,Pf)
   REAL,DIMENSION(Nz,Nx)                         :: aux_vel
   REAL,INTENT(in)                               :: dh,dt
   REAL, DIMENSION(Nz,Nx)                        :: vel            ! model
-  REAL, DIMENSION(Nz,Nx)                        :: P           !Pressure Matrix
+  REAL, DIMENSION(Nz,Nx)                        :: P              !Pressure Matrix
   REAL, DIMENSION(Nz,Nx)                        :: Pf
 
   aux_vel = (vel*vel)*(dt*dt)/(12*(dh*dh))  ! Remove it. Wasting cpu time
@@ -123,3 +200,35 @@ SUBROUTINE wavelet(switch,dtime,MaxAmp,freqcut)
     end select
     close(77)
 END SUBROUTINE wavelet
+
+
+!***********************************************************************************
+!************************* Bordas ***********************************************
+!***********************************************************************************
+
+
+!***********************************************************************************
+!************************* Snapshots ***********************************************
+!***********************************************************************************
+
+SUBROUTINE snapshots(Nsnap,nt)
+   
+   
+   
+    if k % int(nt/Nsnap) == 0
+      
+        character(len=90) :: filename
+                 
+              fileloop: do j = 1, Nsnap
+              
+                write(filename, 'snapshot',I1,'.dat') j 
+                      
+                open(unit = j, status = 'old', file = filename)
+                
+                close j
+                
+              end do fileloop
+                
+    end if
+    
+END SUBROUTINE snapshots

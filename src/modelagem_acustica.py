@@ -17,30 +17,71 @@ def readbinaryfile(dim1,dim2,filename):
       pl.draw() # drawing figure to be plotted later
       
       return matrix
-  
+ 
+def estabilidade(C,h,beta,dt):
     
-def plotgraphics(filename,color):
+    if dt > h / beta * np.max(np.max(C)):
+        print "Erro de estabilidade"  
+    else:
+        print "Condicao de estabilidade satisfeita"
     
-    """
+def dispersao(C,h,alfa,f_corte):
     
-    plotgraphics - Function that read a file and plot a graphic.
-    
-    REMEMBER: The function 'np.loadtxt' only can be used with files written
-              with dot 
-    
-    """
-    
-    X,Y = np.loadtxt(filename, unpack = True)
-
-    pl.figure()
-    pl.plot(X,Y, c = color)
-    pl.draw()
-    
-    return 
-    
-    
+    if h > np.min(np.min(C)) / (alfa * f_corte):
+        print "Erro de dispersao numerica"   
+    else:
+        print "Condicao de nao dispersao satisfeita"
+   
+def plotgraphics(ID,filename,color):
         
-      
+        """
+    
+            plotgraphics - Function that read a file and plot a graphic.
+    
+            REMEMBER: The function 'np.loadtxt' only can be used with files written
+              with dot 
+              
+              ID = number of columns of the file
+    
+         """
+        
+        
+        if ID == 2:
+             
+            X,Y = np.loadtxt(filename, unpack = True)
+
+            pl.figure()
+            pl.plot(X,Y, c = color)
+            pl.draw()
+        
+        if ID == 1:
+            
+            X = np.loadtxt(filename, unpack = True)
+
+            pl.figure()
+            pl.plot(X, c = color)
+            pl.draw()
+            
+        return 
+	
+	
+def amort(fat_amort,n_grid):
+
+	"""
+	amort - Cria a funcao de amortecimento que vai ser usada nas bordas do modelo e a salva em umarquivo de texto
+	
+	"""
+	
+	w = np.zeros(n_grid-1)
+  
+	for i in np.arange(0,(n_grid -1)):
+		w[i] = np.exp(-(fat_amort * (n_grid-i)) ** 2)
+  
+	  
+	np.savetxt('f_amort.dat',w, delimiter='.')  
+ 
+
+        
 def main():      
       '''
       Main program is here      
@@ -48,21 +89,51 @@ def main():
       
       import parametro      
       from fortransubroutines import wavelet
+      from fortransubroutines import modelagem
+      
+      
+      # Modelo de Velocidade
 
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.filename)
-
+          
+      
+      # Condicao de estabilidade e dispersao
+      
+      estabilidade(C,parametro.h,parametro.beta,parametro.dt)
+      dispersao(C,parametro.h,parametro.alfa,parametro.f_corte)
+      
+      # Fonte Sismica
+      
       wavelet(1,parametro.dt,1,parametro.f_corte)
       
-      fonte = plotgraphics('wavelet_ricker.dat', 'k')
-
-      # Loop do Tempo
+      plotgraphics(2,'wavelet_ricker.dat', 'k')
       
-      #* Colocar depois
       
-      # Operador de Diferencas Finitas de Quarta Ordem      
-      #op_nsg.operador_quarta_ordem(h,dt,C,Pc,Pf)
-
-
+      # Funcao Amortecedora
+      
+      amort(parametro.fat,parametro.nat)
+      
+      plotgraphics(1,'f_amort.dat', 'k')
+      
+      # Modelagem
+      
+      snapshots = raw_input("Deseja salvar snapshots(y or n): ")
+      
+      if snapshots == 'y':
+          
+          Nsnap = input("Quantos Snapshots?")
+          
+          print Nsnap
+          from fortransubroutines import snapshots
+          
+          snapshots(Nsnap,parametro.nt)
+          
+          
+      modelagem(parametro.nt, parametro.Fx, parametro.Fz)
+      
+      
+      
+      
       
 if __name__ == '__main__':
     
@@ -81,7 +152,7 @@ if __name__ == '__main__':
 
 
       elapsed_time_python = time.time() - start_time
-      print ("Tempo de processamento python = ", elapsed_time_python,"s")
+      print ("Tempo de processamento python = ", elapsed_time_python, "s")
 
 
       pl.show() # Showing all figures draw
