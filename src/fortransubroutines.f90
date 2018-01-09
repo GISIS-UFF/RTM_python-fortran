@@ -19,7 +19,6 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte)
   ! revisar nome de entrada do modelo
   CALL  LoadVelocityModel(Nz,Nx,'../modelo_real/marmousi_vp_383x141.bin',vel)
 
-  write(*,*) maxval(maxval(vel,2))
   P    = 0.0                   !Pressure field
   Pf   = 0.0                   !Pressure field in future  
 
@@ -192,13 +191,6 @@ SUBROUTINE LoadVelocityModel(Nz,Nx,modelpath,vel)
      read(23,rec=1) ((vel(j,i),j=1,nz),i=1,nx)       ! read velocity matrix
 
      close(23)
-
-     print*,'============================================================================='
-     print*, 'Loading models from true model folder...'
-     print*,'============================================================================='
-     print*, ''
-     print*, ''
-
   else
      print*, ''
      print*,'============================================================================='
@@ -276,8 +268,6 @@ SUBROUTINE Seismogram(Ntime,Nxspace,Nshot,outfilename,select_folder,Seismmatrix)
   REAL, DIMENSION(Ntime,Nxspace),INTENT(in)      :: Seismmatrix        ! Seismogram
 
   write(num_shot,"(i3.3)")Nshot ! write shot counter in string to write differentes Seismograms
-  
-  write(*,*) outfilename
 
   OPEN(11, FILE=trim(select_folder)//trim(outfilename)//'_sismograma'//num_shot//'.bin', STATUS='unknown',&
        &FORM='unformatted',ACCESS='direct', RECL=(Ntime*Nxspace*4))

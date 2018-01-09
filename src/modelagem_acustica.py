@@ -12,11 +12,8 @@ def readbinaryfile(dim1,dim2,filename):
       with open(filename, 'rb') as f:    
             data   = np.fromfile(f, dtype=np.float32, count= dim1*dim2)
             matrix = np.reshape(data, [dim1,dim2], order='F')
-      # pl.imshow(matrix,cmap='jet')
-      # pl.colorbar()
-      # pl.draw() # drawing figure to be plotted later
-      
       return matrix
+
  
 def estabilidade(C,h,beta,dt):
     
@@ -25,6 +22,7 @@ def estabilidade(C,h,beta,dt):
         # Inserir condicao de parada
     else:
         print "Condicao de estabilidade satisfeita"
+
     
 def dispersao(C,h,alfa,f_corte):
     
@@ -33,6 +31,7 @@ def dispersao(C,h,alfa,f_corte):
         # Inserir condicao de parada
     else:
         print "Condicao de nao dispersao satisfeita"
+
    
 def plotgraphics(ID,filename,color):
         
@@ -66,6 +65,20 @@ def plotgraphics(ID,filename,color):
             
         return 
 	
+def plotmodel(matrix):
+
+      pl.figure()
+      pl.imshow(matrix,cmap='jet')
+      pl.colorbar()
+      pl.draw() # drawing figure to be plotted later
+      
+def plotseism(Sismograma,Nt,Nx):
+
+      pl.figure()
+      pl.imshow(Sismograma,extent=[0,Nt,1,Nx],aspect=100)    
+      pl.imshow(Sismograma,aspect="auto",cmap = pl.cm.gray)    
+      pl.draw()
+
 	
 def amort(fat_amort,n_grid):
 
@@ -97,7 +110,7 @@ def main():
       # Modelo de Velocidade
 
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
-          
+      plotmodel(C)    
       
       # Condicao de estabilidade e dispersao
       
@@ -130,10 +143,8 @@ def main():
                
       Sismograma = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma/Marmousi_sismograma001.bin")
  
+      plotseism(Sismograma,parametro.Nt,parametro.Nx)
 
-      pl.imshow(Sismograma,extent=[0,parametro.Nt,1,parametro.Nx],aspect=100)    
-      pl.imshow(Sismograma,aspect="auto",cmap = pl.cm.gray)    
-      pl.show()
 
 if __name__ == '__main__':
     
