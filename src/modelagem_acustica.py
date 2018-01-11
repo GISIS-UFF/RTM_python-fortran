@@ -18,21 +18,14 @@ def readbinaryfile(dim1,dim2,filename):
 def estabilidade(C,h,beta,dt):
     
     if dt > h / beta * np.max(np.max(C)):
-        print "Erro de estabilidade" 
-        # Inserir condicao de parada
-    else:
-        print "Condicao de estabilidade satisfeita"
+       raise ValueError ("Erro de Estabilidade")
 
     
 def dispersao(C,h,alfa,f_corte):
     
     if h > np.min(np.min(C)) / (alfa * f_corte):
-        print "Erro de dispersao numerica"   
-        # Inserir condicao de parada
-    else:
-        print "Condicao de nao dispersao satisfeita"
-
-   
+        raise ValueError ("Erro de Dispersao Numerica")   
+          
 def plotgraphics(ID,filename,color):
         
         """
@@ -139,7 +132,7 @@ def main():
       shot = 1                               # Numero do tiro 
 
       modelagem(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,\
-                shot,Fx,Fz,fonte,Nfonte)
+                shot,Fx,Fz,fonte,Nfonte,parametro.snapshot,parametro.Nsnap)
                
       Sismograma = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma/Marmousi_sismograma001.bin")
  
