@@ -18,14 +18,16 @@ def readbinaryfile(dim1,dim2,filename):
 def estabilidade(C,h,beta,dt):
     
     if dt > h / beta * np.max(np.max(C)):
+
        raise ValueError ("Erro de Estabilidade")
 
-    
 def dispersao(C,h,alfa,f_corte):
     
     if h > np.min(np.min(C)) / (alfa * f_corte):
+
         raise ValueError ("Erro de Dispersao Numerica")   
-          
+
+   
 def plotgraphics(ID,filename,color):
         
         """
