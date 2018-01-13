@@ -5,12 +5,11 @@
 SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte,snapshot,Nsnap)  
   IMPLICIT NONE  
 
-  INTEGER                      :: k
-  INTEGER                      :: quant   
+  INTEGER                      :: k  
 
   INTEGER,INTENT(in)           :: shot,NSx,NSz,Nfonte     ! Related source
   INTEGER,INTENT(in)           :: Nx,Nz,Nt                ! Grid Elements
-  INTEGER,INTENT(in)		   :: snapshot,Nsnap 	
+  INTEGER,INTENT(in)		       :: snapshot,Nsnap 	
 
   REAL,INTENT(in)              :: dh,dt
   REAL,DIMENSION(Nfonte)       :: fonte                   ! Source
@@ -35,13 +34,11 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte,snapshot,Nsnap)
 
      CALL Updatefield(Nz,Nx,P,Pf)
 	 
-	if (snapshot = 0) then
-		quant = 0 
-		while quant < Nsnap do:
-			CALL snap(Nz,Nx,count_snap,shot,"Marmousi",P)
-			quant = quant + 1
-		end do	
-	end if
+     if (snapshot == 1) then:
+        if (mod(k,int(nt/Nsnap) == 0):
+    		 CALL snap(Nz,Nx,count_snap,shot,"Marmousi",P)
+		  end if	
+	  end if
 	
      ! Revisar posicionamento dos receptores
      Seism(k,:) = P(10,:)

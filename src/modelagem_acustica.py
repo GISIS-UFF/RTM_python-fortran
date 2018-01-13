@@ -74,6 +74,14 @@ def plotseism(Sismograma,Nt,Nx):
       pl.imshow(Sismograma,aspect="auto",cmap = pl.cm.gray)    
       pl.draw()
 
+
+def plotsnaps(filesnap):
+    
+    with open(filesnap, 'rb') as f:
+        pl.figure()
+        pl.imshow(f, 'jet')
+        pl.draw()
+        
 	
 def amort(fat_amort,n_grid):
 
@@ -88,8 +96,7 @@ def amort(fat_amort,n_grid):
 		w[i] = np.exp(-(fat_amort * (n_grid-i)) ** 2)
   
 	  
-	np.savetxt('f_amort.dat',w, delimiter='.')  
- 
+	np.savetxt('f_amort.dat',w, delimiter='.')
 
         
 def main():      
