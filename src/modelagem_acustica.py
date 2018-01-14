@@ -75,12 +75,14 @@ def plotseism(Sismograma,Nt,Nx):
       pl.draw()
 
 
-def plotsnaps(filesnap):
+def plotsnaps(dim1,dim2,f):
     
-    with open(filesnap, 'rb') as f:
-        pl.figure()
-        pl.imshow(f, 'jet')
-        pl.draw()
+    data   = np.fromfile(f, dtype=np.float32, count= dim1*dim2)
+    snaps  = np.reshape(data, [dim1,dim2], order='F')
+   
+    pl.figure()
+    pl.imshow(snaps, 'jet')
+    pl.draw()
         
 	
 def amort(fat_amort,n_grid):
@@ -147,7 +149,10 @@ def main():
  
       plotseism(Sismograma,parametro.Nt,parametro.Nx)
 
-
+      for i in np.arange(1,parametro.Nsnap+1):
+          filesnap = "Marmousi_" + "shot_" + str(shot) + "_snap_" + str(i) + ".bin"
+          plotsnaps(parametro.Nz,parametro.Nx,filesnap) 
+          
 if __name__ == '__main__':
     
       """
