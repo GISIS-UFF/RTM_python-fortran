@@ -18,19 +18,14 @@ def readbinaryfile(dim1,dim2,filename):
 def estabilidade(C,h,beta,dt):
     
     if dt > h / beta * np.max(np.max(C)):
-        print "Erro de estabilidade" 
-        # Inserir condicao de parada
-    else:
-        print "Condicao de estabilidade satisfeita"
 
-    
+       raise ValueError ("Erro de Estabilidade")
+
 def dispersao(C,h,alfa,f_corte):
     
     if h > np.min(np.min(C)) / (alfa * f_corte):
-        print "Erro de dispersao numerica"   
-        # Inserir condicao de parada
-    else:
-        print "Condicao de nao dispersao satisfeita"
+
+        raise ValueError ("Erro de Dispersao Numerica")   
 
    
 def plotgraphics(ID,filename,color):
@@ -79,6 +74,16 @@ def plotseism(Sismograma,Nt,Nx):
       pl.imshow(Sismograma,aspect="auto",cmap = pl.cm.gray)    
       pl.draw()
 
+
+def plotsnaps(dim1,dim2,f):
+    
+    data   = np.fromfile(f, dtype=np.float32, count= dim1*dim2)
+    snaps  = np.reshape(data, [dim1,dim2], order='F')
+   
+    pl.figure()
+    pl.imshow(snaps, 'jet')
+    pl.draw()
+        
 	
 def amort(fat_amort,n_grid):
 
@@ -93,8 +98,7 @@ def amort(fat_amort,n_grid):
 		w[i] = np.exp(-(fat_amort * (n_grid-i)) ** 2)
   
 	  
-	np.savetxt('f_amort.dat',w, delimiter='.')  
- 
+	np.savetxt('f_amort.dat',w, delimiter='.')
 
         
 def main():      
@@ -139,13 +143,16 @@ def main():
       shot = 1                               # Numero do tiro 
 
       modelagem(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,\
-                shot,Fx,Fz,fonte,Nfonte)
+                shot,Fx,Fz,fonte,Nfonte,parametro.snapshot,parametro.Nsnap)
                
       Sismograma = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma/Marmousi_sismograma001.bin")
  
       plotseism(Sismograma,parametro.Nt,parametro.Nx)
 
-
+      for i in np.arange(1,parametro.Nsnap+1):
+          filesnap = "Marmousi_" + "shot_" + str(shot) + "_snap_" + str(i) + ".bin"
+          plotsnaps(parametro.Nz,parametro.Nx,filesnap) 
+          
 if __name__ == '__main__':
     
       """
