@@ -123,7 +123,7 @@ def main():
       
       # Fonte Sismica
       
-      wavelet(1,parametro.dt,1,parametro.f_corte)
+      #wavelet(1,parametro.dt,1,parametro.f_corte) 
       
       plotgraphics(2,'wavelet_ricker.dat', 'k')
       
@@ -143,15 +143,22 @@ def main():
       shot = 1                               # Numero do tiro 
 
       modelagem(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,\
-                shot,Fx,Fz,fonte,Nfonte,parametro.snapshot,parametro.Nsnap)
+                shot,Fx,Fz,fonte,Nfonte)
                
       Sismograma = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma/Marmousi_sismograma001.bin")
  
       plotseism(Sismograma,parametro.Nt,parametro.Nx)
 
-      for i in np.arange(1,parametro.Nsnap+1):
-          filesnap = "Marmousi_" + "shot_" + str(shot) + "_snap_" + str(i) + ".bin"
-          plotsnaps(parametro.Nz,parametro.Nx,filesnap) 
+      # import glob
+      # import os
+
+      # path = ../teste_snapshot
+      # for filename in glob.glob((os.path.join(path, '*.bin')):
+      #       plotsnaps(parametro.Nz,parametro.Nx,filesnap) 
+
+      # for i in np.arange(1,parametro.Nsnap+1):
+      #     filesnap = "Marmousi_" + "shot_" + str(shot) + "_snap_" + str(i) + ".bin"
+      #     plotsnaps(parametro.Nz,parametro.Nx,filesnap) 
           
 if __name__ == '__main__':
     

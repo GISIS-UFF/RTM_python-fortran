@@ -2,14 +2,13 @@
 !************************* Modelagem ***********************************************
 !***********************************************************************************
 
-SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte,snapshot,Nsnap)  
+SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte)  
   IMPLICIT NONE  
 
-  INTEGER                      :: k  
+  INTEGER                      :: k
 
   INTEGER,INTENT(in)           :: shot,NSx,NSz,Nfonte     ! Related source
   INTEGER,INTENT(in)           :: Nx,Nz,Nt                ! Grid Elements
-  INTEGER,INTENT(in)		       :: snapshot,Nsnap 	
 
   REAL,INTENT(in)              :: dh,dt
   REAL,DIMENSION(Nfonte)       :: fonte                   ! Source
@@ -33,13 +32,7 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte,snapshot,Nsnap)
      ! CERJAN
 
      CALL Updatefield(Nz,Nx,P,Pf)
-	 
-     if (snapshot == 1) then:
-        if (mod(k,int(nt/Nsnap) == 0):
-    		 CALL snap(Nz,Nx,count_snap,shot,"Marmousi",P)
-		  end if	
-	  end if
-	
+
      ! Revisar posicionamento dos receptores
      Seism(k,:) = P(10,:)
   end do
@@ -279,6 +272,9 @@ SUBROUTINE Seismogram(Ntime,Nxspace,Nshot,outfilename,select_folder,Seismmatrix)
   OPEN(11, FILE=trim(select_folder)//trim(outfilename)//'_sismograma'//num_shot//'.bin', STATUS='unknown',&
        &FORM='unformatted',ACCESS='direct', RECL=(Ntime*Nxspace*4))
 
+ ! OPEN(11, FILE=trim(select_folder)//'sismograma'//num_shot //'.bin', STATUS='unknown',&
+ !       &FORM='unformatted',ACCESS='direct', RECL=(Ntime*Nxspace*4))
+
   write(11,rec=1) Seismmatrix
   CLOSE(11)
 
@@ -289,28 +285,28 @@ END SUBROUTINE Seismogram
 ! !***********************************************************************************  
 ! !*************************SNAPSHOT**************************************************
 ! !***********************************************************************************
- SUBROUTINE snap(Nz,Nx,count_snap,shot,outfile,Field)
-   IMPLICIT NONE
-   CHARACTER(len=3)                               :: num_shot,num_snap  !write differents files
+! SUBROUTINE snap(Nz,Nx,count_snap,shot,outfile,Field)
+!   IMPLICIT NONE
+!   CHARACTER(len=3)                               :: num_shot,num_snap  !write differents files
 
-   CHARACTER(LEN=*),INTENT(in)                    :: outfile            !output filename pattern
-   INTEGER,INTENT(inout)                          :: count_snap
-   INTEGER,INTENT(in)                             :: Nx,Nz,shot
-   REAL, DIMENSION(Nz,Nx),INTENT(in)              :: Field
+!   CHARACTER(LEN=40),INTENT(in)                   :: outfile            !output filename pattern
+!   INTEGER,INTENT(inout)                          :: count_snap
+!   INTEGER,INTENT(in)                             :: Nx,Nz,shot
+!   REAL, DIMENSION(Nz,Nx),INTENT(in)              :: Field
 
-   count_snap = count_snap + 1          !snap couting
+!   count_snap = count_snap + 1          !snap couting
 
-   write(num_shot,"(i3.3)")shot         !write shot counter in string 
-   write(num_snap,"(i3.3)")count_snap   !change in string
+!   write(num_shot,"(i3.3)")shot         !write shot counter in string 
+!   write(num_snap,"(i3.3)")count_snap   !change in string
 
 
-   write(*,"(A11,A10,i3,A20,A3,A8,A3)")' writting snapshot ', num_snap,' of shot ',num_shot
+!   write(*,"(A11,A10,i3,A20,A3,A8,A3)")' writting snapshot ', num_snap,' of shot ',num_shot
 
-   OPEN(10, FILE='../snapshot/'//trim(outfile)//'_shot'//num_shot//'snap'//num_snap //'.bin', STATUS='unknown',&
-        &FORM='unformatted',ACCESS='direct', RECL=(Nz*Nx*4))
+!   OPEN(10, FILE='../snapshot/'//trim(outfile)//'_shot'//num_shot//'snap'//num_snap //'.bin', STATUS='unknown',&
+!        &FORM='unformatted',ACCESS='direct', RECL=(Nz*Nx*4))
 
-   write(10,rec=1) Field !write Pressure matrix    
-   close(10)
+!   write(10,rec=1) Field !write Pressure matrix    
+!   close(10)
 
-   RETURN
- END SUBROUTINE snap
+!   RETURN
+! END SUBROUTINE snap
