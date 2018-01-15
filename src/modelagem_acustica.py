@@ -125,7 +125,7 @@ def main():
       
       wavelet(1,parametro.dt,1,parametro.f_corte)
       
-      plotgraphics(2,'wavelet_ricker.dat', 'k')
+      # plotgraphics(2,'wavelet_ricker.dat', 'k')
       
       lixo, fonte = np.loadtxt('wavelet_ricker.dat', unpack = True)
       Nfonte      = np.size(fonte)
@@ -134,7 +134,7 @@ def main():
       
       amort(parametro.fat,parametro.nat)
       
-      plotgraphics(1,'f_amort.dat', 'k')
+      # plotgraphics(1,'f_amort.dat', 'k')
       
       # Modelagem
       
@@ -142,16 +142,16 @@ def main():
       Fz = int(parametro.Nz/2)               # Posicao da Fonte (z)
       shot = 1                               # Numero do tiro 
 
-      modelagem(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,\
-                shot,Fx,Fz,fonte,Nfonte,parametro.snapshot,parametro.Nsnap)
+      # modelagem(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,\
+      #           shot,Fx,Fz,fonte,Nfonte)#,parametro.Nsnap)
                
       Sismograma = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma/Marmousi_sismograma001.bin")
  
       plotseism(Sismograma,parametro.Nt,parametro.Nx)
 
       for i in np.arange(1,parametro.Nsnap+1):
-          filesnap = "Marmousi_" + "shot_" + str(shot) + "_snap_" + str(i) + ".bin"
-          plotsnaps(parametro.Nz,parametro.Nx,filesnap) 
+            filesnap = "../snapshot/Marmousi_" + "shot" + '%03d'%(shot) + "snap" + '%03d'%(i) + ".bin"
+            plotsnaps(parametro.Nz,parametro.Nx,filesnap) 
           
 if __name__ == '__main__':
     
