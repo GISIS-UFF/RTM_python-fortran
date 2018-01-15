@@ -2,21 +2,26 @@
 !************************* Modelagem ***********************************************
 !***********************************************************************************
 
-SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte,snapshot,Nsnap)  
+SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte)!,Nsnap)  
   IMPLICIT NONE  
 
-  INTEGER                      :: k  
+  INTEGER                      :: k
 
+!  INTEGER,INTENT(in)           :: Nsnap
+  INTEGER                      :: Nsnap,snap_shot,count_snap
   INTEGER,INTENT(in)           :: shot,NSx,NSz,Nfonte     ! Related source
   INTEGER,INTENT(in)           :: Nx,Nz,Nt                ! Grid Elements
-  INTEGER,INTENT(in)		       :: snapshot,Nsnap 	
 
   REAL,INTENT(in)              :: dh,dt
   REAL,DIMENSION(Nfonte)       :: fonte                   ! Source
   REAL,DIMENSION(Nz,Nx)        :: P,Pf,vel
   REAL,DIMENSION(Nt,Nx)        :: Seism              
 
+  Nsnap      = 20
+  Nsnap = Nt/Nsnap              ! evaluate number of snapshots
 
+  count_snap = 0
+  snap_shot  = 1
   ! revisar nome de entrada do modelo
   CALL  LoadVelocityModel(Nz,Nx,'../modelo_real/marmousi_vp_383x141.bin',vel)
 
@@ -33,15 +38,14 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte,snapshot,Nsnap)
      ! CERJAN
 
      CALL Updatefield(Nz,Nx,P,Pf)
-	 
-     if (snapshot == 1) then:
-        if (mod(k,int(nt/Nsnap) == 0):
-    		 CALL snap(Nz,Nx,count_snap,shot,"Marmousi",P)
-		  end if	
-	  end if
-	
+
      ! Revisar posicionamento dos receptores
      Seism(k,:) = P(10,:)
+     
+     if ( (mod(k,Nsnap)==0)  .and. snap_shot>0) then 
+        print *, "k=",k , "time=", (k-1)*dt
+        CALL snap(Nz,Nx,count_snap,snap_shot,"Marmousi",P)
+     end if
   end do
   
   CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
@@ -279,38 +283,41 @@ SUBROUTINE Seismogram(Ntime,Nxspace,Nshot,outfilename,select_folder,Seismmatrix)
   OPEN(11, FILE=trim(select_folder)//trim(outfilename)//'_sismograma'//num_shot//'.bin', STATUS='unknown',&
        &FORM='unformatted',ACCESS='direct', RECL=(Ntime*Nxspace*4))
 
+ ! OPEN(11, FILE=trim(select_folder)//'sismograma'//num_shot //'.bin', STATUS='unknown',&
+ !       &FORM='unformatted',ACCESS='direct', RECL=(Ntime*Nxspace*4))
+
   write(11,rec=1) Seismmatrix
   CLOSE(11)
 
   RETURN
 END SUBROUTINE Seismogram
 
-! !Não finalizada ainda
-! !***********************************************************************************  
-! !*************************SNAPSHOT**************************************************
-! !***********************************************************************************
- SUBROUTINE snap(Nz,Nx,count_snap,shot,outfile,Field)
-   IMPLICIT NONE
-   CHARACTER(len=3)                               :: num_shot,num_snap  !write differents files
+!***********************************************************************************  
+!*************************SNAPSHOT**************************************************
+!***********************************************************************************
+SUBROUTINE snap(Nz,Nx,count_snap,shot,outfile,Field)
+  IMPLICIT NONE
+  CHARACTER(len=3)                               :: num_shot,num_snap  !write differents files
 
-   CHARACTER(LEN=*),INTENT(in)                    :: outfile            !output filename pattern
-   INTEGER,INTENT(inout)                          :: count_snap
-   INTEGER,INTENT(in)                             :: Nx,Nz,shot
-   REAL, DIMENSION(Nz,Nx),INTENT(in)              :: Field
+  CHARACTER(LEN=*),INTENT(in)                    :: outfile            !output filename pattern
+  INTEGER,INTENT(inout)                          :: count_snap
+  INTEGER,INTENT(in)                             :: Nx,Nz,shot
+  REAL, DIMENSION(Nz,Nx),INTENT(in)              :: Field
 
-   count_snap = count_snap + 1          !snap couting
+  count_snap = count_snap + 1          !snap couting
 
-   write(num_shot,"(i3.3)")shot         !write shot counter in string 
-   write(num_snap,"(i3.3)")count_snap   !change in string
+  write(num_shot,"(i3.3)")shot         !write shot counter in string 
+  write(num_snap,"(i3.3)")count_snap   !change in string
 
 
-   write(*,"(A11,A10,i3,A20,A3,A8,A3)")' writting snapshot ', num_snap,' of shot ',num_shot
+  write(*,"(A11,A10,A20,A3)")' writting snapshot ', num_snap,' of shot ',num_shot
 
-   OPEN(10, FILE='../snapshot/'//trim(outfile)//'_shot'//num_shot//'snap'//num_snap //'.bin', STATUS='unknown',&
-        &FORM='unformatted',ACCESS='direct', RECL=(Nz*Nx*4))
+!  write(*,*) '../snapshot/'//trim(outfile)//'_shot'//num_shot//'snap'//num_snap //'.bin'
+  OPEN(10, FILE='../snapshot/'//trim(outfile)//'_shot'//num_shot//'snap'//num_snap //'.bin', STATUS='unknown',&
+       &FORM='unformatted',ACCESS='direct', RECL=(Nz*Nx*4))
 
-   write(10,rec=1) Field !write Pressure matrix    
-   close(10)
+  write(10,rec=1) Field !write Pressure matrix    
+  close(10)
 
-   RETURN
- END SUBROUTINE snap
+  RETURN
+END SUBROUTINE snap

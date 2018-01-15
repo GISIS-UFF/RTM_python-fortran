@@ -19,4 +19,4 @@ T   	   = 4		       # Tempo final
 Nt	   = int(T/dt)         # Numero de amostras
 beta	   = 4		       # Parametro de estabilidade
 alfa	   = 5		       # Parametro de dispersao
-
+Nsnap      = 20                 # Numero de SnapShot
