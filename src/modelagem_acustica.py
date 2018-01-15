@@ -75,16 +75,22 @@ def plotseism(Sismograma,Nt,Nx):
       pl.draw()
 
 
-def plotsnaps(dim1,dim2,f):
-    
-    data   = np.fromfile(f, dtype=np.float32, count= dim1*dim2)
-    snaps  = np.reshape(data, [dim1,dim2], order='F')
-   
-    pl.figure()
-    pl.imshow(snaps, 'jet')
-    pl.draw()
-        
-	
+def plotsnaps(dim1,dim2):
+
+      fig2 = pl.figure()
+      shot = 1
+      movie = []
+
+      for snap in np.arange(1,21):
+            inputfilename="../snapshot/Marmousi_" + "shot" + '%03d'%(shot) + "snap" + '%03d'%(snap) + ".bin"
+            data   = np.fromfile(inputfilename, dtype=np.float32, count= dim1*dim2)
+            base   = np.reshape(data, [dim1,dim2], order='F')
+            snapshot=pl.imshow(base, cmap = pl.cm.gray, animated=True)
+            movie.append([snapshot])
+      im_ani = animation.ArtistAnimation(fig2, movie, interval=250, repeat_delay=3000,
+                                               blit=True)
+  
+      pl.show()
 def amort(fat_amort,n_grid):
 
 	"""
@@ -106,7 +112,6 @@ def main():
       Main program is here      
       '''
       
-      import parametro      
       from fortransubroutines import wavelet
       from fortransubroutines import modelagem
       
@@ -123,7 +128,7 @@ def main():
       
       # Fonte Sismica
       
-      wavelet(1,parametro.dt,1,parametro.f_corte)
+      #wavelet(1,parametro.dt,1,parametro.f_corte) 
       
       # plotgraphics(2,'wavelet_ricker.dat', 'k')
       
@@ -142,17 +147,21 @@ def main():
       Fz = int(parametro.Nz/2)               # Posicao da Fonte (z)
       shot = 1                               # Numero do tiro 
 
-      # modelagem(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,\
-      #           shot,Fx,Fz,fonte,Nfonte)#,parametro.Nsnap)
-               
+      
+      modelagem(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,\
+                shot,Fx,Fz,fonte,parametro.Nsnap,Nfonte)#,parametro.Nsnap)
+      # SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o
+      # Esse problema esta na linha 5 do codigo em fortran
+
+
+
       Sismograma = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma/Marmousi_sismograma001.bin")
  
       plotseism(Sismograma,parametro.Nt,parametro.Nx)
 
-      for i in np.arange(1,parametro.Nsnap+1):
-            filesnap = "../snapshot/Marmousi_" + "shot" + '%03d'%(shot) + "snap" + '%03d'%(i) + ".bin"
-            plotsnaps(parametro.Nz,parametro.Nx,filesnap) 
-          
+      
+      plotsnaps(parametro.Nz,parametro.Nx) 
+    
 if __name__ == '__main__':
     
       """
@@ -160,18 +169,19 @@ if __name__ == '__main__':
       """
       
       import numpy as np      
-      import matplotlib.pylab as pl      
+      import matplotlib.pylab as pl 
+      import matplotlib.animation as animation     
       import time
+      import parametro
+
       
       start_time = time.time()
 
 
       main() # Call main function
 
-
       elapsed_time_python = time.time() - start_time
       print ("Tempo de processamento python = ", elapsed_time_python, "s")
     
-
       pl.show() # Showing all figures draw
 

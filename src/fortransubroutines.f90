@@ -2,13 +2,18 @@
 !************************* Modelagem ***********************************************
 !***********************************************************************************
 
-SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte)!,Nsnap)  
+SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte,Nsnap)
+
+! SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o 
+! Esse problema esta na linha 151 do codigo em python
+
+ 
   IMPLICIT NONE  
 
-  INTEGER                      :: k
+  INTEGER                      :: k,aux
 
-!  INTEGER,INTENT(in)           :: Nsnap
-  INTEGER                      :: Nsnap,snap_shot,count_snap
+  INTEGER,INTENT(in)           :: Nsnap
+  INTEGER                      :: snap_shot,count_snap
   INTEGER,INTENT(in)           :: shot,NSx,NSz,Nfonte     ! Related source
   INTEGER,INTENT(in)           :: Nx,Nz,Nt                ! Grid Elements
 
@@ -17,9 +22,11 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte)!,Nsnap)
   REAL,DIMENSION(Nz,Nx)        :: P,Pf,vel
   REAL,DIMENSION(Nt,Nx)        :: Seism              
 
-  Nsnap      = 20
-  Nsnap = Nt/Nsnap              ! evaluate number of snapshots
+ aux      = Nsnap
+ aux = Nt/aux              ! evaluate number of snapshots
 
+ write(*,*) Nsnap
+ write(*,*) Nfonte
   count_snap = 0
   snap_shot  = 1
   ! revisar nome de entrada do modelo
@@ -42,8 +49,8 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte)!,Nsnap)
      ! Revisar posicionamento dos receptores
      Seism(k,:) = P(10,:)
      
-     if ( (mod(k,Nsnap)==0)  .and. snap_shot>0) then 
-        print *, "k=",k , "time=", (k-1)*dt
+     if ( (mod(k,aux)==0)  .and. snap_shot>0 .and. snap_shot == shot) then 
+       ! print *, "k=",k , "time=", (k-1)*dt
         CALL snap(Nz,Nx,count_snap,snap_shot,"Marmousi",P)
      end if
   end do
@@ -310,9 +317,6 @@ SUBROUTINE snap(Nz,Nx,count_snap,shot,outfile,Field)
   write(num_snap,"(i3.3)")count_snap   !change in string
 
 
-  write(*,"(A11,A10,A20,A3)")' writting snapshot ', num_snap,' of shot ',num_shot
-
-!  write(*,*) '../snapshot/'//trim(outfile)//'_shot'//num_shot//'snap'//num_snap //'.bin'
   OPEN(10, FILE='../snapshot/'//trim(outfile)//'_shot'//num_shot//'snap'//num_snap //'.bin', STATUS='unknown',&
        &FORM='unformatted',ACCESS='direct', RECL=(Nz*Nx*4))
 
