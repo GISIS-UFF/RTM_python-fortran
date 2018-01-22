@@ -2,7 +2,9 @@
 !************************* Modelagem ***********************************************
 !***********************************************************************************
 
-SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte,Nsnap)
+SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap)
+
+!SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap)
 
 ! SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o 
 ! Esse problema esta na linha 151 do codigo em python
@@ -10,26 +12,49 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte,Nsnap)
  
   IMPLICIT NONE  
 
-  INTEGER                      :: k,aux
+  INTEGER                        :: k,aux
+                                 
+  INTEGER,INTENT(in)             :: Nsnap
+  INTEGER                        :: count_snap
+  INTEGER,INTENT(in)             :: shot,shotshow,NSx,NSz,Nfonte     ! Related source
+  INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
+  
+  REAL,INTENT(in)                :: dh,dt
+  REAL,DIMENSION(Nfonte)         :: fonte                   ! Source
+  REAL,DIMENSION(NpCA)           :: func_Am
+  REAL,DIMENSION(Nz,Nx)          :: P,Pf,vel
+  REAL,DIMENSION(Nt,Nx)          :: Seism              
 
-  INTEGER,INTENT(in)           :: Nsnap
-  INTEGER                      :: snap_shot,count_snap
-  INTEGER,INTENT(in)           :: shot,NSx,NSz,Nfonte     ! Related source
-  INTEGER,INTENT(in)           :: Nx,Nz,Nt                ! Grid Elements
 
-  REAL,INTENT(in)              :: dh,dt
-  REAL,DIMENSION(Nfonte)       :: fonte                   ! Source
-  REAL,DIMENSION(Nz,Nx)        :: P,Pf,vel
-  REAL,DIMENSION(Nt,Nx)        :: Seism              
+  ! Load Damping Function
+  open(20,file='f_amort.dat',&
+       status='unknown',form='formatted')
+  do k=1,NpCA
+     read(20,*)func_Am(k)
+  end do
+      
 
- aux      = Nsnap
- aux = Nt/aux              ! evaluate number of snapshots
-
- write(*,*) Nsnap
- write(*,*) Nfonte
+!   write(*,*)" Nz       ", Nz       
+!   write(*,*)" Nx       ", Nx       
+!   write(*,*)" Nt       ", Nt       
+!   write(*,*)" dh       ", dh       
+!   write(*,*)" dt       ", dt       
+!   write(*,*)" NpCA     ", NpCA     
+!   write(*,*)" shot     ", shot     
+!   write(*,*)" shotshow ", shotshow 
+!   write(*,*)" NSx      ", NSx      
+!   write(*,*)" NSz      ", NSz      
+! !  write(*,*)" fonte    ", fonte    
+!   write(*,*)" Nfonte   ", Nfonte   
+!   write(*,*)" Nsnap    ", Nsnap    
+  
+  aux = Nsnap
+  aux = Nt/aux              ! evaluate number of snapshots
+  
   count_snap = 0
-  snap_shot  = 1
+
   ! revisar nome de entrada do modelo
+  
   CALL  LoadVelocityModel(Nz,Nx,'../modelo_real/marmousi_vp_383x141.bin',vel)
 
   P    = 0.0                   !Pressure field
@@ -42,16 +67,19 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,shot,NSx,NSz,fonte,Nfonte,Nsnap)
      end if
 
      CALL operador_quarta_ordem(Nz,Nx,dh,dt,vel,P,Pf)
-     ! CERJAN
 
      CALL Updatefield(Nz,Nx,P,Pf)
+
+     CALL CerjanNSG(Nz,Nx,NpCA,func_Am,P,Pf)            
+
+     CALL ReynoldsEngquistNSG(Nz,Nx,dh,dt,vel,P,Pf)
 
      ! Revisar posicionamento dos receptores
      Seism(k,:) = P(10,:)
      
-     if ( (mod(k,aux)==0)  .and. snap_shot>0 .and. snap_shot == shot) then 
+     if ( (mod(k,aux)==0)  .and. shotshow >0 .and. shotshow == shot) then 
        ! print *, "k=",k , "time=", (k-1)*dt
-        CALL snap(Nz,Nx,count_snap,snap_shot,"Marmousi",P)
+        CALL snap(Nz,Nx,count_snap,shotshow,"Marmousi",P)
      end if
   end do
   
@@ -227,7 +255,7 @@ SUBROUTINE LoadVelocityModel(Nz,Nx,modelpath,vel)
 END SUBROUTINE LoadVelocityModel
 
 !***********************************************************************************
-!************************* Updatefield **************************************
+!************************* Updatefield *********************************************
 !***********************************************************************************
 SUBROUTINE Updatefield(Nz,Nx,P,Pf)
   IMPLICIT NONE
@@ -325,3 +353,185 @@ SUBROUTINE snap(Nz,Nx,count_snap,shot,outfile,Field)
 
   RETURN
 END SUBROUTINE snap
+
+  !***********************************************************************
+!*******************CERJAN - DAMPING LAYER - NSG ***********************
+!***********************************************************************
+SUBROUTINE CerjanNSG(Nz,Nx,NpCA,func_Am,P,Pf)
+  IMPLICIT NONE
+  INTEGER                           :: i,j,k
+  REAL                              :: aux
+
+  INTEGER,INTENT(in)                :: Nx,Nz,NpCA
+  REAL, DIMENSION(npca),INTENT(in)  :: func_Am
+  REAL,DIMENSION(Nz,Nx),INTENT(inout) :: P, Pf
+
+  !Amortecimento a esquerda
+  DO i=3, NpCA !i=2, NpCA
+     aux = func_Am(i)
+     DO j=2, Nz-1
+        P(j,i)  = P(j,i)*aux
+        Pf(j,i) = Pf(j,i)*aux
+     ENDDO
+  ENDDO
+
+  !Amortecimento a direita
+  k = NpCA
+  DO i=Nx-NpCA+1, Nx-2 !i=Nx-NpCA+1, Nx-1
+     aux = func_Am(k)
+     DO j=2, Nz-1
+        P(j,i)  = P(j,i)*aux
+        Pf(j,i) = Pf(j,i)*aux
+     ENDDO
+     k= k -1
+  ENDDO
+
+  !    Amortecimento fundo
+  DO i=2, Nx-1
+     k = NpCA
+     DO j=Nz-NpCA+1, Nz-2  !j=Nz-NpCA+1, Nz-1
+        aux=func_Am(k)
+        P(j,i)  = P(j,i)*aux
+        Pf(j,i) = Pf(j,i)*aux
+        k = k - 1
+     ENDDO
+  ENDDO
+
+  ! !    Amortecimento cima
+  ! DO i=2, Nx-1
+  !    DO j=2, NpCA
+  !       aux = func_Am(j)
+  !       P(j,i)  = P(j,i)*aux
+  !       Pf(j,i) = Pf(j,i)*aux          
+  !    ENDDO
+  ! ENDDO
+  RETURN
+END SUBROUTINE CerjanNSG
+
+  !***********************************************************************
+  !**********Reynolds/Engquist - DAMPING LAYER - NSG ***********************
+  !***********************************************************************
+  SUBROUTINE ReynoldsEngquistNSG(Nz,Nx,dh,dt,vel,P,Pf)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ! ReynoldsEngquistNSG calculates Non Reflective Bounary Condition.          
+    !
+    ! INPUT:  
+    ! dtime         = Time increment
+    ! time_0        = Initial time source
+    ! Ntsource      = Total Number of time elements of Source
+    ! MaxAmp        = Max Amplitude of Source. 
+    ! switch        = Select beewten NSG(1) and SSG(2) operatior 
+    ! freqcut       =  Cut Frequency of wavelet
+
+    ! OUTPUT: 
+    ! vectorsource  = Source amplitude vector
+    ! 
+    ! Code Written by Felipe Timoteo
+    !                 Last update: May 15th, 2017
+    !
+    ! Copyright (C) 2017 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
+    !                    Departamento de Geologia e Geofísica
+    !                    Universidade Federal Fluminense
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    IMPLICIT NONE
+    INTEGER                                       :: i,j
+    INTEGER,INTENT(in)                            :: Nx,Nz          !Grid Elements
+    REAL,DIMENSION(Nz,Nx)                         :: aux_vel
+    REAL,INTENT(in)                               :: dh,dt
+    REAL, DIMENSION(Nz,Nx),INTENT(in)             :: vel            ! model
+    REAL, DIMENSION(Nz,Nx),INTENT(inout)          :: Pf,P           !Pressure Matrix
+
+    aux_vel = vel*dt/dh
+    !      Inferior
+    DO i=2,Nx-1
+       Pf(Nz,i) = P(Nz,i) - aux_vel(Nz,i)*(P(Nz,i)-P(Nz-1,i))
+    ENDDO
+
+    !      Direita
+    DO j=1,Nz
+       Pf(j,Nx) = P(j,Nx) - aux_vel(j,Nx)*(P(j,Nx)-P(j,Nx-1))
+    ENDDO
+
+    !      Esquerda
+    DO j=1,Nz
+       Pf(j,1)  = P(j,1)  + aux_vel(j,1)*(P(j,2)-P(j,1))
+    ENDDO
+
+    ! !      Superior
+    ! DO i=2,Nx-1
+    !    Pf(1,i) = P(1,i) + aux_vel(1,i)*(P(2,i)-P(1,i))
+    ! ENDDO
+
+  END SUBROUTINE ReynoldsEngquistNSG
+
+  !***********************************************************************************
+  !************************* Trannsit Time Matrix ************************************
+  !***********************************************************************************
+  SUBROUTINE TransitTimeMatrix(Nz,Nx,k,P,TTM,ATTM)
+    ! Calculation of Transit Time Matrix
+    ! The Criteria choose to evaluate a Transit Time Matrix was 
+    ! maximum amplitude of pressure field
+    ! INPUT:  
+    ! Nz            = Total Number of Grid Points in Z direction   
+    ! Nx            = Total Number of Grid Points in X direction   
+    ! P             = Current Pressure Field
+    ! TTM           = update Transit Time Matrix
+    ! ATTM          = previous Transit Time Matrix
+
+    ! OUTPUT: 
+    ! TTM           = updated Transit Time Matrix
+    ! ATTM          = previous Transit Time Matrix
+    ! 
+    ! steplength    = Step Length
+    ! 
+    ! Code Written by Felipe Timoteo
+    !                 Last update: May 1st, 2017
+    !
+    ! Copyright (C) 2017 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
+    !                    Departamento de Geologia e Geofísica
+    !                    Universidade Federal Fluminense
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    IMPLICIT NONE
+
+    INTEGER                           :: i,j
+
+    INTEGER,INTENT(in)                :: Nx,Nz,k
+    REAL,DIMENSION(Nz,Nx),INTENT(inout) :: P,TTM,ATTM
+
+    do i = 1,Nx
+       do j = 1,Nz
+          if (abs(P(j,i)) > abs(ATTM(j,i))) then
+             ATTM(j,i) = P(j,i)
+             TTM(j,i)  = k 
+          end if
+       end do
+    end do
+
+    RETURN
+  END SUBROUTINE TransitTimeMatrix
+
+  !***********************************************************************************
+  !!**************************** IMAGING CONDITION ***********************************
+  !***********************************************************************************
+  SUBROUTINE ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
+    IMPLICIT NONE
+
+    INTEGER                              :: i,j
+
+    INTEGER,INTENT(in)                   :: Nx,Nz,k
+    REAL,DIMENSION(Nz,Nx),INTENT(in)     :: P,TTM
+    REAL,DIMENSION(Nz,Nx),INTENT(inout)  :: Image
+
+
+    do i = 1,Nx
+       do j = 1,Nz
+
+          if (k == TTM(j,i)) then
+             Image(j,i) = P(j,i)
+          end if
+
+       end do
+    end do
+
+    RETURN
+  END SUBROUTINE ImagingConditionMaxAmP
