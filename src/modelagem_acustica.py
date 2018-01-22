@@ -98,14 +98,14 @@ def amort(fat_amort,n_grid):
 	
 	"""
 	
-	w = np.zeros(n_grid-1)
+	w = np.zeros(n_grid)
   
-	for i in np.arange(0,(n_grid -1)):
+	for i in np.arange(0,(n_grid)):
 		w[i] = np.exp(-(fat_amort * (n_grid-i)) ** 2)
   
 	  
 	np.savetxt('f_amort.dat',w, delimiter='.')
-
+        return w
         
 def main():      
       '''
@@ -119,7 +119,7 @@ def main():
       # Modelo de Velocidade
 
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
-      plotmodel(C)    
+ #     plotmodel(C)    
       
       # Condicao de estabilidade e dispersao
       
@@ -137,30 +137,42 @@ def main():
 
       # Funcao Amortecedora
       
-      amort(parametro.fat,parametro.nat)
+      func_amort = amort(parametro.fat,parametro.nat)
       
       # plotgraphics(1,'f_amort.dat', 'k')
-      
+            
       # Modelagem
       
       Fx = int(parametro.Nx/2)               # Posicao da Fonte (x)
-      Fz = int(parametro.Nz/2)               # Posicao da Fonte (z)
-      shot = 1                               # Numero do tiro 
-
+      Fz = 10 #int(parametro.Nz/2)               # Posicao da Fonte (z)
       
-      modelagem(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,\
-                shot,Fx,Fz,fonte,parametro.Nsnap,Nfonte)#,parametro.Nsnap)
+      # print 'parametro.Nz       ' ,parametro.Nz       
+      # print 'parametro.Nx       ' ,parametro.Nx       
+      # print 'parametro.Nt       ' ,parametro.Nt       
+      # print 'parametro.h        ' ,parametro.h
+      # print 'parametro.dt       ' ,parametro.dt       
+      # print 'parametro.nat      ' ,parametro.nat     
+      # print 'parametro.shot     ' ,parametro.shot     
+      # print 'parametro.shotshow ' ,parametro.shotshow
+      # print 'Fx                 ' ,Fx
+      # print 'Fz                 ' ,Fz
+      # print 'Nfonte             ' ,Nfonte
+      # print 'parametro.Nsnap    ' ,parametro.Nsnap                          
+      # print np.size(fonte),np.size(func_amort)
+
+      modelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
+                parametro.h,parametro.dt,parametro.nat,\
+                parametro.shot,parametro.shotshow,\
+                Fx,Fz,fonte,parametro.Nsnap,Nfonte) #,parametro.Nsnap)
       # SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o
       # Esse problema esta na linha 5 do codigo em fortran
 
-
-
       Sismograma = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma/Marmousi_sismograma001.bin")
  
-      plotseism(Sismograma,parametro.Nt,parametro.Nx)
+#      plotseism(Sismograma,parametro.Nt,parametro.Nx)
 
-      
-      plotsnaps(parametro.Nz,parametro.Nx) 
+      if parametro.shotshow > 0:
+            plotsnaps(parametro.Nz,parametro.Nx) 
     
 if __name__ == '__main__':
     
