@@ -4,6 +4,10 @@ Read Parameters
 from numpy import zeros
 
 modeloreal = '../modelo_real/marmousi_vp_383x141.bin'
+modelosuavizado = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
+modelohomogeneo = '../modelo_homogeneo/velocitymodel_Homo_383x141.bin'
+
+
 
 Nx         = 383               # Numero de pontos no Grid (x)
 Nz         = 141               # Numero de pontos no Grid (z)
