@@ -73,8 +73,9 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
 
 !   CALL  LoadVelocityModel(Nz,Nx,'../modelo_real/marmousi_vp_383x141.bin',vel)
 
-  !CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_real/marmousi_vp_383x141.bin',vel)
-  CALL  LoadVelocityModel(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
+ ! CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_real/marmousi_vp_383x141.bin',vel)
+  CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
+ ! CALL  LoadVelocityModel(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
 
   P    = 0.0                   !Pressure field
   Pf   = 0.0                   !Pressure field in future  
@@ -286,6 +287,27 @@ END SUBROUTINE LoadVelocityModel
 !***********************************************************************************
 
 SUBROUTINE LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,modelpath,vel)
+  ! Load a Velocity model and expand it to consider the absorbing boundaries
+  ! outside of valid model.
+  ! 
+  ! INPUT: 
+  ! Nz            = Number of grid points in z direction
+  ! Nzz           = Nz + NpCA
+  ! Nx            = Number of grid points in z direction
+  ! Nxx           = Nx + NpCA
+  ! NpCA          = Number of point in absorving boundary
+  ! modelpath     = Model path
+  ! 
+  ! OUTPUT: 
+  ! vel           = Expanded velocity model matrix
+  !
+  ! Code Written by Felipe Timoteo
+  !                 Last update: 31th Jan, 2018
+  !
+  ! Copyright (C) 2018 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
+  !                    Departamento de Geologia e Geofísica
+  !                    Universidade Federal Fluminense
+  
   IMPLICIT NONE
   INTEGER                                         :: i,j           !Counters    
 
