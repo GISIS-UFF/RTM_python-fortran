@@ -4,8 +4,15 @@
 
 SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM)
 
-! SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o 
-! Esse problema esta na linha 151 do codigo em python
+
+  ! SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o 
+  ! Esse problema esta na linha 151 do codigo em python
+
+  ! PROBLEMA POSSIVELMENTE RESOLVIDO: O Nfonte e tratado pela f2py como um argumento opcional portanto nao precisamos chama-lo na funcao do python, somente no fortran. Isso porque o Nfonte ja indentificado como tamanho do vetor
+
+  !Veja linha 29
+
+  !Na duvida leia: https://stackoverflow.com/questions/35528927/f2py-order-of-function-arguments-messed-u
 
 ! PROBLEMA POSSIVELMENTE RESOLVIDO: O Nfonte e tratado pela f2py como um argumento opcional portanto nao precisamos chama-lo na funcao do python, somente no fortran. Isso porque o Nfonte ja indentificado como tamanho do vetor
 
@@ -13,16 +20,34 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
 
 !Na duvida leia: https://stackoverflow.com/questions/35528927/f2py-order-of-function-arguments-messed-up
 
- 
   IMPLICIT NONE  
 
   INTEGER                        :: k,aux
-                                 
+  INTEGER                        :: Nzz,Nxx                     !Expanded dimensions
+
   INTEGER,INTENT(in)             :: Nsnap
   INTEGER                        :: count_snap
   INTEGER,INTENT(in)             :: shot,shotshow,NSx,NSz,Nfonte     ! Related source
   INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
   INTEGER,INTENT(in)             :: regTTM                         ! Condition Transit Time Matrix
+
+
+  REAL,INTENT(in)                :: dh,dt                            
+  REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
+  REAL,DIMENSION(NpCA)           :: func_Am                           
+  REAL,DIMENSION(Nt,Nx)          :: Seism                             
+  REAL,DIMENSION(Nz,Nx)          :: TTM, ATTM                        !Related Transit Time Matrix
+  REAL,ALLOCATABLE,DIMENSION(:,:):: P,Pf,vel                          
+ 
+
+  Nxx = NpCA + Nx + NpCA
+  Nzz = Nz + NpCA
+  
+  ALLOCATE(P(Nzz,Nxx))
+  ALLOCATE(Pf(Nzz,Nxx))
+  ALLOCATE(vel(Nzz,Nxx))
+
+
                                                                       
   REAL,INTENT(in)                :: dh,dt                            
   REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
@@ -32,13 +57,29 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
   REAL,DIMENSION(Nz,Nx)          :: TTM, ATTM                        !Related Transit Time Matrix
 
   
+
   ! Load Damping Function
   open(20,file='f_amort.dat',&
        status='unknown',form='formatted')
   do k=1,NpCA
      read(20,*)func_Am(k)
   end do
-      
+
+  !   write(*,*)" Nz       ", Nz       
+  !   write(*,*)" Nx       ", Nx       
+  !   write(*,*)" Nt       ", Nt       
+  !   write(*,*)" dh       ", dh       
+  !   write(*,*)" dt       ", dt       
+  !   write(*,*)" NpCA     ", NpCA     
+  !   write(*,*)" shot     ", shot     
+  !   write(*,*)" shotshow ", shotshow 
+  !   write(*,*)" NSx      ", NSx      
+  !   write(*,*)" NSz      ", NSz      
+  !   write(*,*)" fonte    ", fonte    
+  ! write(*,*)" Nfonte   ", Nfonte   
+  ! write(*,*)" Nsnap    ", Nsnap  
+  ! write(*,*) "regTTM", regTTM
+
 
 !   write(*,*)" Nz       ", Nz       
 !   write(*,*)" Nx       ", Nx       
@@ -55,12 +96,21 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
 ! write(*,*)" Nsnap    ", Nsnap  
 ! write(*,*) "regTTM", regTTM
   
+
   aux = Nsnap
   aux = Nt/aux              ! evaluate number of snapshots
-  
+
   count_snap = 0
   TTM = 0.0
   ATTM = 0.0 
+
+!   ! revisar nome de entrada do modelo
+
+!   CALL  LoadVelocityModel(Nz,Nx,'../modelo_real/marmousi_vp_383x141.bin',vel)
+
+ ! CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_real/marmousi_vp_383x141.bin',vel)
+  CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
+ ! CALL  LoadVelocityModel(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
 
   ! revisar nome de entrada do modelo
   
@@ -68,28 +118,39 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
 
    CALL  LoadVelocityModel(Nz,Nx,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
 
+
   P    = 0.0                   !Pressure field
   Pf   = 0.0                   !Pressure field in future  
 
   do k=1,Nt
 
      if (k <= Nfonte) then        !Nts=nint(tm/dt)+1!number of source time elements
-        P(Nsz,Nsx)= P(Nsz,Nsx) - fonte(k)
+        P(Nsz,Nsx + NpCA)= P(Nsz,Nsx+NpCA) - fonte(k) ! NpCA para o modelo expandido
      end if
 
-     CALL operador_quarta_ordem(Nz,Nx,dh,dt,vel,P,Pf)
+     CALL operador_quarta_ordem(Nzz,Nxx,dh,dt,vel,P,Pf)
 
-     CALL Updatefield(Nz,Nx,P,Pf)
+     CALL Updatefield(Nzz,Nxx,P,Pf)
 
-     CALL CerjanNSG(Nz,Nx,NpCA,func_Am,P,Pf)            
+     CALL CerjanNSG(Nzz,Nxx,NpCA,func_Am,P,Pf)            
 
-     CALL ReynoldsEngquistNSG(Nz,Nx,dh,dt,vel,P,Pf)
+     CALL ReynoldsEngquistNSG(Nzz,Nxx,dh,dt,vel,P,Pf)
 
      ! Revisar posicionamento dos receptores
-     Seism(k,:) = P(10,:)
+      Seism(k,:) = P(10,NpCA+1:NpCA+Nx)
+  
      
      if ( (mod(k,aux)==0)  .and. shotshow >0 .and. shotshow == shot) then 
         ! print *, "k=",k , "time=", (k-1)*dt
+
+        CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi",P(1:Nz,NpCA+1:NpCA+Nx))
+     end if
+
+     if (regTTM == 1) then 
+        CALL TransitTimeMatrix(Nz,Nx,k,P(1:Nz,NpCA+1:NpCA+Nx),TTM,ATTM,shot)
+    end if
+   end do
+
         CALL snap(Nz,Nx,count_snap,shotshow,"Marmousi",P)
      end if
 
@@ -107,8 +168,9 @@ END SUBROUTINE modelagem
 
 
 !***********************************************************************************
-!************************* 4nd ORDER OPERATOR IN SPACE****************************
+!************************* 4nd ORDER OPERATOR IN SPACE******************************
 !***********************************************************************************  
+
 SUBROUTINE operador_quarta_ordem(Nz,Nx,dh,dt,vel,P,Pf)
   IMPLICIT NONE
   INTEGER                                       :: i,j
@@ -236,6 +298,7 @@ END SUBROUTINE wavelet
 !***********************************************************************************
 !*************************LOAD VELOCITY MODEL***************************************
 !***********************************************************************************
+
 SUBROUTINE LoadVelocityModel(Nz,Nx,modelpath,vel)
   IMPLICIT NONE
   INTEGER                                         :: i,j                     !Counters
@@ -273,8 +336,94 @@ SUBROUTINE LoadVelocityModel(Nz,Nx,modelpath,vel)
 END SUBROUTINE LoadVelocityModel
 
 !***********************************************************************************
+!************************ LOAD EXPANDED VELOCITY MODEL   ***************************
+!***********************************************************************************
+
+SUBROUTINE LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,modelpath,vel)
+  ! Load a Velocity model and expand it to consider the absorbing boundaries
+  ! outside of valid model.
+  ! 
+  ! INPUT: 
+  ! Nz            = Number of grid points in z direction
+  ! Nzz           = Nz + NpCA
+  ! Nx            = Number of grid points in z direction
+  ! Nxx           = Nx + NpCA
+  ! NpCA          = Number of point in absorving boundary
+  ! modelpath     = Model path
+  ! 
+  ! OUTPUT: 
+  ! vel           = Expanded velocity model matrix
+  !
+  ! Code Written by Felipe Timoteo
+  !                 Last update: 31th Jan, 2018
+  !
+  ! Copyright (C) 2018 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
+  !                    Departamento de Geologia e Geofísica
+  !                    Universidade Federal Fluminense
+  
+  IMPLICIT NONE
+  INTEGER                                         :: i,j           !Counters    
+
+  LOGICAL                                         :: filevel       !Check if file exists
+  CHARACTER(*),INTENT(in)                         :: modelpath
+  INTEGER,INTENT(in)                              :: NpCA
+  INTEGER,INTENT(in)                              :: Nz,Nx         !Grid parameter
+  INTEGER,INTENT(in)                              :: Nzz,Nxx       !Expanded Grid parameter 
+  REAL, DIMENSION(Nzz,Nxx),INTENT(out)            :: vel           !Rock physics
+
+
+  INQUIRE(file=modelpath,exist=filevel) !verify if parameters file exist
+
+  if (filevel) then
+
+     OPEN(23, FILE=modelpath, STATUS='unknown',&
+          &FORM='unformatted',ACCESS='direct', RECL=(Nx*Nz*4))
+
+     read(23,rec=1) ((vel(j,i),j=1,Nz),i=NpCA+1,NpCA+Nx)       ! read velocity matrix
+
+     ! Left Boundary
+     do i = 1,NpCA
+        do j = 1,Nz
+           vel(j,i) = vel(j,NpCA+1)
+        end do
+     end do
+
+     ! Right Boundary
+     do i = NpCA+Nx+1,Nxx
+        do j = 1,Nz
+           vel(j,i) = vel(j,NpCA+Nx)
+        end do
+     end do
+
+     !Bottom Boundary
+     do i = 1,Nxx
+        do j = Nz+1,Nzz
+           vel(j,i) = vel(Nz,i)
+        end do
+     end do
+
+     close(23)
+
+  else
+     print*, ''
+     print*,'============================================================================='
+     print*, 'Velocity model input File doesnt exist!'
+     print*, 'Please create a velocity model and '
+     print*, 'put it in the Models folder.'
+     print*,'============================================================================='
+     print*, ''
+     print*, 'PRESS RETURN TO EXIT...   '
+     read(*,*)
+     stop
+
+  end if
+  RETURN
+END SUBROUTINE LoadVelocityModelExpanded
+
+!***********************************************************************************
 !************************* Updatefield *********************************************
 !***********************************************************************************
+
 SUBROUTINE Updatefield(Nz,Nx,P,Pf)
   IMPLICIT NONE
 
@@ -299,6 +448,7 @@ END SUBROUTINE Updatefield
 !***********************************************************************************
 !************************* WRITTING SEISMOGRAM *************************************
 !***********************************************************************************
+
 SUBROUTINE Seismogram(Ntime,Nxspace,Nshot,outfilename,select_folder,Seismmatrix)
   ! Writting Seismogram in a binary file
   ! 
@@ -344,8 +494,9 @@ SUBROUTINE Seismogram(Ntime,Nxspace,Nshot,outfilename,select_folder,Seismmatrix)
 END SUBROUTINE Seismogram
 
 !***********************************************************************************  
-!*************************SNAPSHOT**************************************************
+!**************************** SNAPSHOT *********************************************
 !***********************************************************************************
+
 SUBROUTINE snap(Nz,Nx,count_snap,shot,outfile,Field)
   IMPLICIT NONE
   CHARACTER(len=3)                               :: num_shot,num_snap  !write differents files
@@ -425,90 +576,135 @@ SUBROUTINE CerjanNSG(Nz,Nx,NpCA,func_Am,P,Pf)
   RETURN
 END SUBROUTINE CerjanNSG
 
-  !***********************************************************************
-  !**********Reynolds/Engquist - DAMPING LAYER - NSG ***********************
-  !***********************************************************************
-  SUBROUTINE ReynoldsEngquistNSG(Nz,Nx,dh,dt,vel,P,Pf)
+!***********************************************************************
+!**********Reynolds/Engquist - DAMPING LAYER - NSG *********************
+!***********************************************************************
+
+SUBROUTINE ReynoldsEngquistNSG(Nz,Nx,dh,dt,vel,P,Pf)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ! ReynoldsEngquistNSG calculates Non Reflective Bounary Condition.          
-    !
-    ! INPUT:  
-    ! dtime         = Time increment
-    ! time_0        = Initial time source
-    ! Ntsource      = Total Number of time elements of Source
-    ! MaxAmp        = Max Amplitude of Source. 
-    ! switch        = Select beewten NSG(1) and SSG(2) operatior 
-    ! freqcut       =  Cut Frequency of wavelet
+  ! ReynoldsEngquistNSG calculates Non Reflective Bounary Condition.          
+  !
+  ! INPUT:  
+  ! dtime         = Time increment
+  ! time_0        = Initial time source
+  ! Ntsource      = Total Number of time elements of Source
+  ! MaxAmp        = Max Amplitude of Source. 
+  ! switch        = Select beewten NSG(1) and SSG(2) operatior 
+  ! freqcut       =  Cut Frequency of wavelet
 
-    ! OUTPUT: 
-    ! vectorsource  = Source amplitude vector
-    ! 
-    ! Code Written by Felipe Timoteo
-    !                 Last update: May 15th, 2017
-    !
-    ! Copyright (C) 2017 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
-    !                    Departamento de Geologia e Geofísica
-    !                    Universidade Federal Fluminense
+  ! OUTPUT: 
+  ! vectorsource  = Source amplitude vector
+  ! 
+  ! Code Written by Felipe Timoteo
+  !                 Last update: May 15th, 2017
+  !
+  ! Copyright (C) 2017 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
+  !                    Departamento de Geologia e Geofísica
+  !                    Universidade Federal Fluminense
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    IMPLICIT NONE
-    INTEGER                                       :: i,j
-    INTEGER,INTENT(in)                            :: Nx,Nz          !Grid Elements
-    REAL,DIMENSION(Nz,Nx)                         :: aux_vel
-    REAL,INTENT(in)                               :: dh,dt
-    REAL, DIMENSION(Nz,Nx),INTENT(in)             :: vel            ! model
-    REAL, DIMENSION(Nz,Nx),INTENT(inout)          :: Pf,P           !Pressure Matrix
+  IMPLICIT NONE
+  INTEGER                                       :: i,j
+  INTEGER,INTENT(in)                            :: Nx,Nz          !Grid Elements
+  REAL,DIMENSION(Nz,Nx)                         :: aux_vel
+  REAL,INTENT(in)                               :: dh,dt
+  REAL, DIMENSION(Nz,Nx),INTENT(in)             :: vel            ! model
+  REAL, DIMENSION(Nz,Nx),INTENT(inout)          :: Pf,P           !Pressure Matrix
 
-    aux_vel = vel*dt/dh
-    !      Inferior
-    DO i=2,Nx-1
-       Pf(Nz,i) = P(Nz,i) - aux_vel(Nz,i)*(P(Nz,i)-P(Nz-1,i))
-    ENDDO
+  aux_vel = vel*dt/dh
+  !      Inferior
+  DO i=2,Nx-1
+     Pf(Nz,i) = P(Nz,i) - aux_vel(Nz,i)*(P(Nz,i)-P(Nz-1,i))
+  ENDDO
 
-    !      Direita
-    DO j=1,Nz
-       Pf(j,Nx) = P(j,Nx) - aux_vel(j,Nx)*(P(j,Nx)-P(j,Nx-1))
-    ENDDO
+  !      Direita
+  DO j=1,Nz
+     Pf(j,Nx) = P(j,Nx) - aux_vel(j,Nx)*(P(j,Nx)-P(j,Nx-1))
+  ENDDO
 
-    !      Esquerda
-    DO j=1,Nz
-       Pf(j,1)  = P(j,1)  + aux_vel(j,1)*(P(j,2)-P(j,1))
-    ENDDO
+  !      Esquerda
+  DO j=1,Nz
+     Pf(j,1)  = P(j,1)  + aux_vel(j,1)*(P(j,2)-P(j,1))
+  ENDDO
 
-    ! !      Superior
-    ! DO i=2,Nx-1
-    !    Pf(1,i) = P(1,i) + aux_vel(1,i)*(P(2,i)-P(1,i))
-    ! ENDDO
+  ! !      Superior
+  ! DO i=2,Nx-1
+  !    Pf(1,i) = P(1,i) + aux_vel(1,i)*(P(2,i)-P(1,i))
+  ! ENDDO
 
-  END SUBROUTINE ReynoldsEngquistNSG
+END SUBROUTINE ReynoldsEngquistNSG
 
-  !***********************************************************************************
-  !************************* Trannsit Time Matrix ************************************
-  !***********************************************************************************
-  SUBROUTINE TransitTimeMatrix(Nz,Nx,k,P,TTM,ATTM)
-    ! Calculation of Transit Time Matrix
-    ! The Criteria choose to evaluate a Transit Time Matrix was 
-    ! maximum amplitude of pressure field
-    ! INPUT:  
-    ! Nz            = Total Number of Grid Points in Z direction   
-    ! Nx            = Total Number of Grid Points in X direction   
-    ! P             = Current Pressure Field
-    ! TTM           = update Transit Time Matrix
-    ! ATTM          = previous Transit Time Matrix
+!***********************************************************************************
+!************************* Trannsit Time Matrix ************************************
+!***********************************************************************************
 
-    ! OUTPUT: 
-    ! TTM           = updated Transit Time Matrix
-    ! ATTM          = previous Transit Time Matrix
-    ! 
-    ! steplength    = Step Length
-    ! 
-    ! Code Written by Felipe Timoteo
-    !                 Last update: May 1st, 2017
-    !
-    ! Copyright (C) 2017 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
-    !                    Departamento de Geologia e Geofísica
-    !                    Universidade Federal Fluminense
+SUBROUTINE TransitTimeMatrix(Nz,Nx,k,P,TTM,ATTM)
+  ! Calculation of Transit Time Matrix
+  ! The Criteria choose to evaluate a Transit Time Matrix was 
+  ! maximum amplitude of pressure field
+  ! INPUT:  
+  ! Nz            = Total Number of Grid Points in Z direction   
+  ! Nx            = Total Number of Grid Points in X direction   
+  ! P             = Current Pressure Field
+  ! TTM           = update Transit Time Matrix
+  ! ATTM          = previous Transit Time Matrix
+
+  ! OUTPUT: 
+  ! TTM           = updated Transit Time Matrix
+  ! ATTM          = previous Transit Time Matrix
+  ! 
+  ! steplength    = Step Length
+  ! 
+  ! Code Written by Felipe Timoteo
+  !                 Last update: May 1st, 2017
+  !
+  ! Copyright (C) 2017 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
+  !                    Departamento de Geologia e Geofísica
+  !                    Universidade Federal Fluminense
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    IMPLICIT NONE
+  IMPLICIT NONE
+
+  INTEGER                                :: i,j
+  INTEGER,INTENT(in)                     :: Nx,Nz,k
+
+  REAL,DIMENSION(Nz,Nx),INTENT(inout)    :: P,TTM,ATTM
+
+  do i = 1,Nx
+     do j = 1,Nz
+        if (abs(P(j,i)) > abs(ATTM(j,i))) then
+           ATTM(j,i) = P(j,i)
+           TTM(j,i)  = k 
+        end if
+     end do
+  end do
+  RETURN
+END SUBROUTINE TransitTimeMatrix
+
+!***********************************************************************************
+!***************************** IMAGING CONDITION ***********************************
+!***********************************************************************************
+
+SUBROUTINE ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
+  IMPLICIT NONE
+
+  INTEGER                              :: i,j
+
+  INTEGER,INTENT(in)                   :: Nx,Nz,k
+  REAL,DIMENSION(Nz,Nx),INTENT(in)     :: P,TTM
+  REAL,DIMENSION(Nz,Nx),INTENT(inout)  :: Image
+
+
+  do i = 1,Nx
+     do j = 1,Nz
+
+        if (k == TTM(j,i)) then
+           Image(j,i) = P(j,i)
+        end if
+
+     end do
+  end do
+
+  RETURN
+END SUBROUTINE ImagingConditionMaxAmP
 
     INTEGER                                :: i,j
     INTEGER,INTENT(in)                     :: Nx,Nz,k
@@ -526,28 +722,31 @@ END SUBROUTINE CerjanNSG
     RETURN
   END SUBROUTINE TransitTimeMatrix
 
-  !***********************************************************************************
-  !!**************************** IMAGING CONDITION ***********************************
-  !***********************************************************************************
-  SUBROUTINE ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
-    IMPLICIT NONE
 
-    INTEGER                              :: i,j
+!***********************************************************************************
+!!**************************** WRITING MATRIX **************************************
+!***********************************************************************************
 
-    INTEGER,INTENT(in)                   :: Nx,Nz,k
-    REAL,DIMENSION(Nz,Nx),INTENT(in)     :: P,TTM
-    REAL,DIMENSION(Nz,Nx),INTENT(inout)  :: Image
+SUBROUTINE writematrix(Nz,Nx,shot,Matrix,outfile,folder)
+  IMPLICIT NONE
+
+  CHARACTER(len=3)                    :: num_shot
+  CHARACTER(LEN=*),INTENT(in)         :: outfile,folder
+
+  INTEGER,INTENT(in)                  :: Nz
+  INTEGER,INTENT(in)                  :: Nx
+  INTEGER,INTENT(in)                 :: shot
+  REAL,DIMENSION(Nz,Nx), INTENT(in)   :: Matrix
+
+  write(num_shot,"(i3.3)")shot         !write shot counter in string   
+
+  OPEN(12, FILE=trim(folder)//trim(outfile)//'_shot'//num_shot //'.bin', STATUS='unknown',&
+       &FORM='unformatted',ACCESS='direct', RECL=(Nz*Nx*4))
 
 
-    do i = 1,Nx
-       do j = 1,Nz
+  write(12,rec=1) Matrix !write  matrix    
+  close(12)
 
-          if (k == TTM(j,i)) then
-             Image(j,i) = P(j,i)
-          end if
-
-       end do
-    end do
 
     RETURN
   END SUBROUTINE ImagingConditionMaxAmP
@@ -576,6 +775,7 @@ OPEN(12, FILE=trim(folder)//trim(outfile)//'_shot'//num_shot //'.bin', STATUS='u
 
 write(12,rec=1) Matrix !write  matrix    
 close(12)
+
 
 
 END SUBROUTINE writematrix
