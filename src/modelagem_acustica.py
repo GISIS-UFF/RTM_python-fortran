@@ -86,6 +86,12 @@ def plotseism(Sismograma,Nt,Nx):
       imshow(Sismograma,aspect="auto",cmap = cm.gray, extent = [1,parametro.Nx,parametro.T,0])
       xlabel('Canal') 
       ylabel('Tempo (segundos)')
+
+      from matplotlib.pylab import figure, imshow, draw, cm
+
+      figure()    
+      imshow(Sismograma,aspect="auto",cmap = cm.gray)
+
       draw()
 
 
@@ -190,7 +196,7 @@ def main():
                 parametro.h,parametro.dt,parametro.nat,\
                 parametro.shot,parametro.shotshow,\
                 Fx,Fz,fonte,parametro.Nsnap,regTTM)
- 
+
       # SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o
       # Esse problema esta na linha 5 do codigo em fortran
 
@@ -200,10 +206,11 @@ def main():
  
       plotseism(Sismograma,parametro.T,parametro.Nx)
 
+
       matriz_tempo_transito = readbinaryfile(parametro.Nz,parametro.Nx,"../matriz_tempo_transito/Marmousi_shot001.bin")
       
       plotmodel(matriz_tempo_transito)
-      
+   
 
       if parametro.shotshow > 0:
             plotsnaps(parametro.Nz,parametro.Nx) 

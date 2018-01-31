@@ -4,6 +4,7 @@
 
 SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM)
 
+
   ! SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o 
   ! Esse problema esta na linha 151 do codigo em python
 
@@ -11,8 +12,13 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
 
   !Veja linha 29
 
-  !Na duvida leia: https://stackoverflow.com/questions/35528927/f2py-order-of-function-arguments-messed-up
+  !Na duvida leia: https://stackoverflow.com/questions/35528927/f2py-order-of-function-arguments-messed-u
 
+! PROBLEMA POSSIVELMENTE RESOLVIDO: O Nfonte e tratado pela f2py como um argumento opcional portanto nao precisamos chama-lo na funcao do python, somente no fortran. Isso porque o Nfonte ja indentificado como tamanho do vetor
+
+!Veja linha 26
+
+!Na duvida leia: https://stackoverflow.com/questions/35528927/f2py-order-of-function-arguments-messed-up
 
   IMPLICIT NONE  
 
@@ -24,6 +30,7 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
   INTEGER,INTENT(in)             :: shot,shotshow,NSx,NSz,Nfonte     ! Related source
   INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
   INTEGER,INTENT(in)             :: regTTM                         ! Condition Transit Time Matrix
+
 
   REAL,INTENT(in)                :: dh,dt                            
   REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
@@ -40,13 +47,24 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
   ALLOCATE(Pf(Nzz,Nxx))
   ALLOCATE(vel(Nzz,Nxx))
 
- 
+
+                                                                      
+  REAL,INTENT(in)                :: dh,dt                            
+  REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
+  REAL,DIMENSION(NpCA)           :: func_Am                           
+  REAL,DIMENSION(Nz,Nx)          :: P,Pf,vel                          
+  REAL,DIMENSION(Nt,Nx)          :: Seism                             
+  REAL,DIMENSION(Nz,Nx)          :: TTM, ATTM                        !Related Transit Time Matrix
+
+  
+
   ! Load Damping Function
   open(20,file='f_amort.dat',&
        status='unknown',form='formatted')
   do k=1,NpCA
      read(20,*)func_Am(k)
   end do
+
   !   write(*,*)" Nz       ", Nz       
   !   write(*,*)" Nx       ", Nx       
   !   write(*,*)" Nt       ", Nt       
@@ -62,6 +80,23 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
   ! write(*,*)" Nsnap    ", Nsnap  
   ! write(*,*) "regTTM", regTTM
 
+
+!   write(*,*)" Nz       ", Nz       
+!   write(*,*)" Nx       ", Nx       
+!   write(*,*)" Nt       ", Nt       
+!   write(*,*)" dh       ", dh       
+!   write(*,*)" dt       ", dt       
+!   write(*,*)" NpCA     ", NpCA     
+!   write(*,*)" shot     ", shot     
+!   write(*,*)" shotshow ", shotshow 
+!   write(*,*)" NSx      ", NSx      
+!   write(*,*)" NSz      ", NSz      
+!   write(*,*)" fonte    ", fonte    
+! write(*,*)" Nfonte   ", Nfonte   
+! write(*,*)" Nsnap    ", Nsnap  
+! write(*,*) "regTTM", regTTM
+  
+
   aux = Nsnap
   aux = Nt/aux              ! evaluate number of snapshots
 
@@ -76,6 +111,13 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
  ! CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_real/marmousi_vp_383x141.bin',vel)
   CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
  ! CALL  LoadVelocityModel(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
+
+  ! revisar nome de entrada do modelo
+  
+!  CALL  LoadVelocityModel(Nz,Nx,'../modelo_real/marmousi_vp_383x141.bin',vel)
+
+   CALL  LoadVelocityModel(Nz,Nx,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
+
 
   P    = 0.0                   !Pressure field
   Pf   = 0.0                   !Pressure field in future  
@@ -100,6 +142,7 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
      
      if ( (mod(k,aux)==0)  .and. shotshow >0 .and. shotshow == shot) then 
         ! print *, "k=",k , "time=", (k-1)*dt
+
         CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi",P(1:Nz,NpCA+1:NpCA+Nx))
      end if
 
@@ -108,11 +151,21 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
     end if
    end do
 
+        CALL snap(Nz,Nx,count_snap,shotshow,"Marmousi",P)
+     end if
+
+     if (regTTM == 1) then 
+        CALL TransitTimeMatrix(Nz,Nx,k,P,TTM,ATTM,shot)
+     end if
+  end do
+  
   CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
 
   CALL writematrix(Nz,Nx,shot,TTM, "Marmousi","../matriz_tempo_transito/")
 
 END SUBROUTINE modelagem
+
+
 
 !***********************************************************************************
 !************************* 4nd ORDER OPERATOR IN SPACE******************************
@@ -653,6 +706,22 @@ SUBROUTINE ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
   RETURN
 END SUBROUTINE ImagingConditionMaxAmP
 
+    INTEGER                                :: i,j
+    INTEGER,INTENT(in)                     :: Nx,Nz,k
+   
+    REAL,DIMENSION(Nz,Nx),INTENT(inout)    :: P,TTM,ATTM
+
+    do i = 1,Nx
+       do j = 1,Nz
+          if (abs(P(j,i)) > abs(ATTM(j,i))) then
+             ATTM(j,i) = P(j,i)
+             TTM(j,i)  = k 
+          end if
+       end do
+    end do
+    RETURN
+  END SUBROUTINE TransitTimeMatrix
+
 
 !***********************************************************************************
 !!**************************** WRITING MATRIX **************************************
@@ -677,6 +746,36 @@ SUBROUTINE writematrix(Nz,Nx,shot,Matrix,outfile,folder)
 
   write(12,rec=1) Matrix !write  matrix    
   close(12)
+
+
+    RETURN
+  END SUBROUTINE ImagingConditionMaxAmP
+
+
+!***********************************************************************************
+!!**************************** WRITING MATRIX **************************************
+!***********************************************************************************
+
+SUBROUTINE writematrix(Nz,Nx,shot,Matrix,outfile,folder)
+  IMPLICIT NONE
+
+  CHARACTER(len=3)                    :: num_shot
+  CHARACTER(LEN=*),INTENT(in)         :: outfile,folder
+  
+  INTEGER,INTENT(in)                  :: Nz
+  INTEGER,INTENT(in)                  :: Nx
+   INTEGER,INTENT(in)                 :: shot
+  REAL,DIMENSION(Nz,Nx), INTENT(in)   :: Matrix
+
+write(num_shot,"(i3.3)")shot         !write shot counter in string   
+
+OPEN(12, FILE=trim(folder)//trim(outfile)//'_shot'//num_shot //'.bin', STATUS='unknown',&
+       &FORM='unformatted',ACCESS='direct', RECL=(Nz*Nx*4))
+
+
+write(12,rec=1) Matrix !write  matrix    
+close(12)
+
 
 
 END SUBROUTINE writematrix
