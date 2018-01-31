@@ -2,7 +2,7 @@
 !************************* Modelagem ***********************************************
 !***********************************************************************************
 
-SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM)
+SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM)
 
   ! SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o 
   ! Esse problema esta na linha 151 do codigo em python
@@ -71,12 +71,15 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
 
 !   ! revisar nome de entrada do modelo
 
-!   CALL  LoadVelocityModel(Nz,Nx,'../modelo_real/marmousi_vp_383x141.bin',vel)
+  !  CALL  LoadVelocityModel(Nz,Nx,'../modelo_real/marmousi_vp_383x141.bin',vel)
+  !  CALL  LoadVelocityModel(Nz,Nx,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
 
- ! CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_real/marmousi_vp_383x141.bin',vel)
+  !CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_real/marmousi_vp_383x141.bin',vel)
+  
   CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
- ! CALL  LoadVelocityModel(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
-
+  
+  !CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_camada_de_agua/velocitymodel_Hmgns_wtrly.bin',vel)
+  
   P    = 0.0                   !Pressure field
   Pf   = 0.0                   !Pressure field in future  
 
@@ -102,17 +105,19 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
         ! print *, "k=",k , "time=", (k-1)*dt
         CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi",P(1:Nz,NpCA+1:NpCA+Nx))
      end if
-
+     
      if (regTTM == 1) then 
         CALL TransitTimeMatrix(Nz,Nx,k,P(1:Nz,NpCA+1:NpCA+Nx),TTM,ATTM,shot)
-    end if
-   end do
+     end if
 
-  CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
+    end do
+
+  !CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
+  !CALL Seismogram(Nt,Nx,shot,"Homogeneo","../sismogramas_modelo_camada_de_agua/",Seism)
 
   CALL writematrix(Nz,Nx,shot,TTM, "Marmousi","../matriz_tempo_transito/")
 
-END SUBROUTINE modelagem
+END SUBROUTINE nucleomodelagem
 
 !***********************************************************************************
 !************************* 4nd ORDER OPERATOR IN SPACE******************************
@@ -440,6 +445,85 @@ SUBROUTINE Seismogram(Ntime,Nxspace,Nshot,outfilename,select_folder,Seismmatrix)
   RETURN
 END SUBROUTINE Seismogram
 
+
+!************************************************************************************
+!************************* LOADING SEISMOGRAM  *************************************
+!***********************************************************************************
+SUBROUTINE LoadSeismogram(Ntime,Nxspace,Nshot,infilename,select_folder,myID,proc_name,SeismMatrix)
+  ! Load a Seismogram from a binary file
+  ! 
+  ! INPUT:  ../select_folder/outfile_SeismogramShot.bin
+  ! 
+  ! Ntime         = Total Number of Samples in Time
+  ! Nxspace       = Total Number of Grid Points in X direction
+  ! Nshot         = Shot Number
+  ! infilename   = Prefix in Seismogram filename
+  ! 
+  ! select_folder = Folder of Seismogram file
+  ! myID          = Number of identification of process (MPI Parameter)
+  ! proc_name     = Name of processor (MPI Parameter)
+  ! SeismMatrix   = Matrix (Nt,Nx) that will receive Seismogram
+  ! 
+  ! OUTPUT: None
+  ! 
+  ! Code Written by Felipe Timoteo
+  !                 Last update: May 23th, 2016
+  !
+  ! Copyright (C) 2017 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
+  !                    Departamento de Geologia e Geofísica
+  !                    Universidade Federal Fluminense
+
+
+  IMPLICIT NONE
+  CHARACTER(len=3)                               :: num_shot           !write differents files
+  INTEGER                                        :: kk,ii              !Counter   
+  LOGICAL                                        :: fileSeis           !Check if file exists
+
+  CHARACTER*(10),INTENT(in)                      :: proc_name          !processor name
+  CHARACTER(LEN=60),INTENT(in)                   :: select_folder      !folder
+  CHARACTER(LEN=40),INTENT(in)                   :: infilename         !output filename pattern
+  INTEGER,INTENT(in)                             :: Nxspace,Ntime,Nshot,MyID
+
+  REAL, DIMENSION(Ntime,Nxspace),INTENT(out)     :: SeismMatrix       !Seismogram
+
+  ! print*,'...............................................'
+  ! write(*,"(A11,A10,A1,i3,A22,i3)"), 'Processor:',proc_name,'-',myID,'Loading Seismogram',Nshot
+  ! write(*,"(A14,A20,A3)"),'in the folder ',select_folder ,'...'
+  ! print*,'...............................................'
+
+  write(num_shot,"(i3.3)")Nshot ! write shot counter in string to write differentes Seismograms
+
+  INQUIRE(file=trim(select_folder)//trim(infilename)//'_Seismogram'//num_shot//'.bin',&
+       exist=fileSeis) !verify if parameters file exist
+
+  if (fileSeis) then
+
+     OPEN(11, FILE=trim(select_folder)//trim(infilename)//'_Seismogram'//num_shot//'.bin', STATUS='unknown',&
+          &FORM='unformatted',ACCESS='direct', RECL=(Ntime*Nxspace*4))
+     read(11,rec=1) ((SeismMatrix(kk,ii),kk=1,Ntime),ii=1,Nxspace)
+     close(11)
+
+  else
+
+
+     print*, ''
+     print*,'============================================================================='
+     print*, 'Seismogram ',num_shot, ' NOT FOUND. Do you have sure that this Seismogram'
+     print*, ' is in the folder:', select_folder, '? Please, if you not sure'
+     print*, 'check the folder and try again.'
+     print*,'============================================================================='
+     print*, ''
+     print*, 'PRESS RETURN TO EXIT...   '
+     read(*,*)
+     stop
+
+  end if
+
+  RETURN
+END SUBROUTINE LoadSeismogram
+
+
+
 !***********************************************************************************  
 !**************************** SNAPSHOT *********************************************
 !***********************************************************************************
@@ -680,3 +764,17 @@ SUBROUTINE writematrix(Nz,Nx,shot,Matrix,outfile,folder)
 
 
 END SUBROUTINE writematrix
+
+
+
+SUBROUTINE REMOVEONDADIRETA()
+
+
+!Ler Sismograma REal
+!Ler Sismograma modelo homeneo
+
+!Sismograma_sem_onda_direta = Sismograma_real -Sismogram_homo
+
+!grava sismograma sem onda direta
+
+END SUBROUTINE REMOVEONDADIRETA
