@@ -13,7 +13,6 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
 
   !Na duvida leia: https://stackoverflow.com/questions/35528927/f2py-order-of-function-arguments-messed-up
 
-
   IMPLICIT NONE  
 
   INTEGER                        :: k,aux
@@ -23,7 +22,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   INTEGER                        :: count_snap
   INTEGER,INTENT(in)             :: shot,shotshow,NSx,NSz,Nfonte     ! Related source
   INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
-  INTEGER,INTENT(in)             :: regTTM                         ! Condition Transit Time Matrix
+  INTEGER,INTENT(in)             :: regTTM                           ! Condition Transit Time Matrix
 
   REAL,INTENT(in)                :: dh,dt                            
   REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
@@ -31,7 +30,6 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   REAL,DIMENSION(Nt,Nx)          :: Seism                             
   REAL,DIMENSION(Nz,Nx)          :: TTM, ATTM                        !Related Transit Time Matrix
   REAL,ALLOCATABLE,DIMENSION(:,:):: P,Pf,vel                          
- 
 
   Nxx = NpCA + Nx + NpCA
   Nzz = Nz + NpCA
@@ -39,14 +37,14 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   ALLOCATE(P(Nzz,Nxx))
   ALLOCATE(Pf(Nzz,Nxx))
   ALLOCATE(vel(Nzz,Nxx))
-
- 
+                                                                      
   ! Load Damping Function
   open(20,file='f_amort.dat',&
        status='unknown',form='formatted')
   do k=1,NpCA
      read(20,*)func_Am(k)
   end do
+
   !   write(*,*)" Nz       ", Nz       
   !   write(*,*)" Nx       ", Nx       
   !   write(*,*)" Nt       ", Nt       
@@ -74,11 +72,10 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   !  CALL  LoadVelocityModel(Nz,Nx,'../modelo_real/marmousi_vp_383x141.bin',vel)
   !  CALL  LoadVelocityModel(Nz,Nx,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
 
-  !CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_real/marmousi_vp_383x141.bin',vel)
-  
+ ! CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_real/marmousi_vp_383x141.bin',vel)
   CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
-  
-  !CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_camada_de_agua/velocitymodel_Hmgns_wtrly.bin',vel)
+ ! CALL  LoadVelocityModel(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
+
   
   P    = 0.0                   !Pressure field
   Pf   = 0.0                   !Pressure field in future  
@@ -118,6 +115,8 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   CALL writematrix(Nz,Nx,shot,TTM, "Marmousi","../matriz_tempo_transito/")
 
 END SUBROUTINE nucleomodelagem
+
+
 
 !***********************************************************************************
 !************************* 4nd ORDER OPERATOR IN SPACE******************************
@@ -726,6 +725,73 @@ SUBROUTINE ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
 
   do i = 1,Nx
      do j = 1,Nz
+        if (abs(P(j,i)) > abs(ATTM(j,i))) then
+           ATTM(j,i) = P(j,i)
+           TTM(j,i)  = k 
+        end if
+     end do
+  end do
+  RETURN
+END SUBROUTINE TransitTimeMatrix
+
+!***********************************************************************************
+!***************************** IMAGING CONDITION ***********************************
+!***********************************************************************************
+
+SUBROUTINE ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
+  IMPLICIT NONE
+
+  INTEGER                              :: i,j
+
+  INTEGER,INTENT(in)                   :: Nx,Nz,k
+  REAL,DIMENSION(Nz,Nx),INTENT(in)     :: P,TTM
+  REAL,DIMENSION(Nz,Nx),INTENT(inout)  :: Image
+
+
+  do i = 1,Nx
+     do j = 1,Nz
+
+        if (k == TTM(j,i)) then
+           Image(j,i) = P(j,i)
+        end if
+
+     end do
+  end do
+
+  RETURN
+END SUBROUTINE ImagingConditionMaxAmP
+
+    INTEGER                                :: i,j
+    INTEGER,INTENT(in)                     :: Nx,Nz,k
+   
+    REAL,DIMENSION(Nz,Nx),INTENT(inout)    :: P,TTM,ATTM
+
+    do i = 1,Nx
+       do j = 1,Nz
+          if (abs(P(j,i)) > abs(ATTM(j,i))) then
+             ATTM(j,i) = P(j,i)
+             TTM(j,i)  = k 
+          end if
+       end do
+    end do
+    RETURN
+  END SUBROUTINE TransitTimeMatrix
+
+
+!***********************************************************************************
+!!**************************** WRITING MATRIX **************************************
+!***********************************************************************************
+
+SUBROUTINE writematrix(Nz,Nx,shot,Matrix,outfile,folder)
+  IMPLICIT NONE
+>>>>>>> 163b9ea8330b217dc72a6935e38940b16a01b6bf
+
+  CHARACTER(len=3)                    :: num_shot
+  CHARACTER(LEN=*),INTENT(in)         :: outfile,folder
+
+<<<<<<< HEAD
+  do i = 1,Nx
+     do j = 1,Nz
 
         if (k == TTM(j,i)) then
            Image(j,i) = P(j,i)
@@ -778,3 +844,4 @@ SUBROUTINE REMOVEONDADIRETA()
 !grava sismograma sem onda direta
 
 END SUBROUTINE REMOVEONDADIRETA
+ 

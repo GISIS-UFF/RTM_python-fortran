@@ -167,10 +167,7 @@ def modelagemacustica(regTTM):
       
       Fx = int(parametro.Nx/2)               # Posicao da Fonte (x)
       Fz = 5  #int(parametro.Nz/2) #10       # Posicao da Fonte (z)
-      
-      # Parametro para registrar ou nao a matriz de tempo de transito
 
-      #regTTM = 1
 
       # print 'parametro.Nz       ' ,parametro.Nz       
       # print 'parametro.Nx       ' ,parametro.Nx       
@@ -206,7 +203,6 @@ def modelagemacustica(regTTM):
             matriz_tempo_transito = readbinaryfile(parametro.Nz,parametro.Nx,"../matriz_tempo_transito/Marmousi_shot001.bin")
       
             plotmodel(matriz_tempo_transito)
-      
 
       if parametro.shotshow > 0:
             plotsnaps(parametro.Nz,parametro.Nx) 
