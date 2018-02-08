@@ -24,3 +24,4 @@ beta	   = 4		       # Parametro de estabilidade
 alfa	   = 5		       # Parametro de dispersao
 shotshow   = 1                 # Tiro para snapshot (0 nao gera snapshot)
 Nsnap      = 21                # Numero de Snapshots 
+zr         = 3                 # Profundidade dos receptores

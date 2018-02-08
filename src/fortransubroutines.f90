@@ -51,21 +51,6 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
      read(20,*)func_Am(k)
   end do
 
-  !   write(*,*)" Nz       ", Nz       
-  !   write(*,*)" Nx       ", Nx       
-  !   write(*,*)" Nt       ", Nt       
-  !   write(*,*)" dh       ", dh       
-  !   write(*,*)" dt       ", dt       
-  !   write(*,*)" NpCA     ", NpCA     
-  !   write(*,*)" shot     ", shot     
-  !   write(*,*)" shotshow ", shotshow 
-  !   write(*,*)" NSx      ", NSx      
-  !   write(*,*)" NSz      ", NSz      
-  !   write(*,*)" fonte    ", fonte    
-  ! write(*,*)" Nfonte   ", Nfonte   
-  ! write(*,*)" Nsnap    ", Nsnap  
-  ! write(*,*) "regTTM", regTTM
-
   aux = Nsnap
   aux = Nt/aux              ! evaluate number of snapshots
 
@@ -130,6 +115,77 @@ caminho_modelo = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
     end if
 
 END SUBROUTINE nucleomodelagem
+
+
+!***********************************************************************************
+!************************* Migracao ************************************************
+!***********************************************************************************  
+
+SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr)
+
+  IMPLICIT NONE  
+
+  INTEGER                        :: k,aux
+  INTEGER                        :: Nzz,Nxx                     !Expanded dimensions
+  CHARACTER(len=256)             :: caminho_modelo
+
+  INTEGER,INTENT(in)             :: Nsnap
+  INTEGER                        :: count_snap
+  INTEGER,INTENT(in)             :: shot,shotshow,NSx,NSz,Nfonte     ! Related source
+  INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
+
+  INTEGER,INTENT(in)             :: regTTM                         ! Condition Transit Time Matrix
+
+
+  REAL,INTENT(in)                :: dh,dt                            
+  REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
+  REAL,DIMENSION(NpCA)           :: func_Am                           
+  REAL,DIMENSION(Nt,Nx)          :: Seism                             
+  REAL,DIMENSION(Nz,Nx)          :: TTM, ATTM                        !Related Transit Time Matrix
+  REAL,ALLOCATABLE,DIMENSION(:,:):: P,Pf,vel                          
+
+  Nxx = NpCA + Nx + NpCA
+  Nzz = Nz + NpCA
+  
+  ALLOCATE(P(Nzz,Nxx))
+  ALLOCATE(Pf(Nzz,Nxx))
+  ALLOCATE(vel(Nzz,Nxx))
+
+  ! Load Damping Function
+  open(20,file='f_amort.dat',&
+       status='unknown',form='formatted')
+  do k=1,NpCA
+     read(20,*)func_Am(k)
+  end do
+
+  caminho_modelo = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
+
+  CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,trim(caminho_modelo),vel)
+
+  P    = 0.0                   !Pressure field
+  Pf   = 0.0                   !Pressure field in future  
+
+  CALL LoadSeismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Sismograma_sem_onda_direta)
+
+  do k = Nt,-1,1
+       P(zr,1:Nx) =  Sismograma_sem_onda_direta(k,1:Nx)
+
+       CALL operador_quarta_ordem(Nzz,Nxx,dh,dt,vel,P,Pf)
+
+       CALL  Updatefield(Nzz,Nxx,P,Pf)
+
+       CALL CerjanNSG(Nzz,Nxx,NpCA,func_Am,P,Pf)            
+
+       CALL ReynoldsEngquistNSG(Nzz,Nxx,dh,dt,vel,P,Pf)
+       
+       CALL ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
+       
+       CALL writematrix(Nz,Nx,shot,Matrix,"Imagem","../Imagem")
+
+  end do
+
+
+END SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA)
 
 !***********************************************************************************
 !************************* 4nd ORDER OPERATOR IN SPACE******************************
