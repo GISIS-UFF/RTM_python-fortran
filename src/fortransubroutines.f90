@@ -2,7 +2,9 @@
 !************************* Modelagem ***********************************************
 !***********************************************************************************
 
+
 SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM)
+
 
   ! SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o 
   ! Esse problema esta na linha 151 do codigo em python
@@ -13,6 +15,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
 
   !Na duvida leia: https://stackoverflow.com/questions/35528927/f2py-order-of-function-arguments-messed-up
 
+
   IMPLICIT NONE  
 
   INTEGER                        :: k,aux
@@ -22,7 +25,9 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   INTEGER                        :: count_snap
   INTEGER,INTENT(in)             :: shot,shotshow,NSx,NSz,Nfonte     ! Related source
   INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
-  INTEGER,INTENT(in)             :: regTTM                           ! Condition Transit Time Matrix
+
+  INTEGER,INTENT(in)             :: regTTM                         ! Condition Transit Time Matrix
+
 
   REAL,INTENT(in)                :: dh,dt                            
   REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
@@ -37,7 +42,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   ALLOCATE(P(Nzz,Nxx))
   ALLOCATE(Pf(Nzz,Nxx))
   ALLOCATE(vel(Nzz,Nxx))
-                                                                      
+
   ! Load Damping Function
   open(20,file='f_amort.dat',&
        status='unknown',form='formatted')
@@ -67,7 +72,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   TTM = 0.0
   ATTM = 0.0 
 
-!   ! revisar nome de entrada do modelo
+ ! revisar nome de entrada do modelo
 
   !  CALL  LoadVelocityModel(Nz,Nx,'../modelo_real/marmousi_vp_383x141.bin',vel)
   !  CALL  LoadVelocityModel(Nz,Nx,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
@@ -100,6 +105,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
      
      if ( (mod(k,aux)==0)  .and. shotshow >0 .and. shotshow == shot) then 
         ! print *, "k=",k , "time=", (k-1)*dt
+
         CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi",P(1:Nz,NpCA+1:NpCA+Nx))
      end if
      
@@ -109,9 +115,11 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
 
     end do
 
+
   !CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
   !CALL Seismogram(Nt,Nx,shot,"Homogeneo","../sismogramas_modelo_camada_de_agua/",Seism)
 
+     
   CALL writematrix(Nz,Nx,shot,TTM, "Marmousi","../matriz_tempo_transito/")
 
 END SUBROUTINE nucleomodelagem
@@ -760,8 +768,8 @@ SUBROUTINE writematrix(Nz,Nx,shot,Matrix,outfile,folder)
   write(12,rec=1) Matrix !write  matrix    
   close(12)
 
-
 END SUBROUTINE writematrix
+
 
 !*********************************************************************************
 !************************ REMOVE ONDA DIRETA *************************************

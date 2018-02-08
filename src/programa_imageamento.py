@@ -188,6 +188,7 @@ def modelagemacustica(regTTM):
                       parametro.shot,parametro.shotshow,\
                       Fx,Fz,fonte,parametro.Nsnap,regTTM)
       
+
       # SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o
       # Esse problema esta na linha 5 do codigo em fortran
 
