@@ -194,14 +194,16 @@ def modelagemacustica(regTTM):
 
       #Problema Resolvido: Olhar o codigo em fortran: linha 10 a linha 14!
 
-      Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma/Marmousi_sismograma001.bin")
+      if regTTM == 0:
+            Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma/Marmousi_sismograma001.bin")
 
-      plotseism(Sismograma_Real,parametro.T,parametro.Nx)
+            plotseism(Sismograma_Real,parametro.T,parametro.Nx)
 
-      Sismograma_H = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma_modelo_camada_de_agua/Homogeneo_sismograma001.bin")
+            Sismograma_H = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma_modelo_camada_de_agua/Homogeneo_sismograma001.bin")
       
-      plotseism(Sismograma_H,parametro.T,parametro.Nx)
+            plotseism(Sismograma_H,parametro.T,parametro.Nx)
 
+      
       if regTTM == 1:
             matriz_tempo_transito = readbinaryfile(parametro.Nz,parametro.Nx,"../matriz_tempo_transito/Marmousi_shot001.bin")
       
@@ -223,7 +225,7 @@ if __name__ == '__main__':
       import parametro
       
 
-      regTTM = 0
+      regTTM = 1
 
       start_time = time.time()
 

@@ -20,6 +20,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
 
   INTEGER                        :: k,aux
   INTEGER                        :: Nzz,Nxx                     !Expanded dimensions
+  CHARACTER(len=256)             :: caminho_modelo
 
   INTEGER,INTENT(in)             :: Nsnap
   INTEGER                        :: count_snap
@@ -74,11 +75,13 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
 
  ! revisar nome de entrada do modelo
 
+caminho_modelo = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
+
   !  CALL  LoadVelocityModel(Nz,Nx,'../modelo_real/marmousi_vp_383x141.bin',vel)
   !  CALL  LoadVelocityModel(Nz,Nx,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
 
  ! CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_real/marmousi_vp_383x141.bin',vel)
-  CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
+  CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,trim(caminho_modelo),vel)
  ! CALL  LoadVelocityModel(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
 
   
@@ -100,8 +103,10 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
      CALL ReynoldsEngquistNSG(Nzz,Nxx,dh,dt,vel,P,Pf)
 
      ! Revisar posicionamento dos receptores
-      Seism(k,:) = P(10,NpCA+1:NpCA+Nx)
-  
+
+     if (regTTM == 0) then
+       Seism(k,:) = P(10,NpCA+1:NpCA+Nx)
+     end if 
      
      if ( (mod(k,aux)==0)  .and. shotshow >0 .and. shotshow == shot) then 
         ! print *, "k=",k , "time=", (k-1)*dt
@@ -110,21 +115,21 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
      end if
      
      if (regTTM == 1) then 
-        CALL TransitTimeMatrix(Nz,Nx,k,P(1:Nz,NpCA+1:NpCA+Nx),TTM,ATTM,shot)
+         CALL TransitTimeMatrix(Nz,Nx,k,P(1:Nz,NpCA+1:NpCA+Nx),TTM,ATTM,shot)
      end if
 
     end do
 
-
-  !CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
-  !CALL Seismogram(Nt,Nx,shot,"Homogeneo","../sismogramas_modelo_camada_de_agua/",Seism)
-
-     
-  CALL writematrix(Nz,Nx,shot,TTM, "Marmousi","../matriz_tempo_transito/")
+    if (regTTM == 0) then
+      CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
+      !CALL Seismogram(Nt,Nx,shot,"Homogeneo","../sismogramas_modelo_camada_de_agua/",Seism)
+    end if
+    
+    if (regTTM == 1) then
+     CALL writematrix(Nz,Nx,shot,TTM, "Marmousi","../matriz_tempo_transito/")
+    end if
 
 END SUBROUTINE nucleomodelagem
-
-
 
 !***********************************************************************************
 !************************* 4nd ORDER OPERATOR IN SPACE******************************
