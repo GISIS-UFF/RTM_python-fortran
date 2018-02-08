@@ -448,7 +448,7 @@ END SUBROUTINE Seismogram
 !************************************************************************************
 !************************* LOADING SEISMOGRAM  *************************************
 !***********************************************************************************
-SUBROUTINE LoadSeismogram(Ntime,Nxspace,Nshot,infilename,select_folder,myID,proc_name,SeismMatrix)
+SUBROUTINE LoadSeismogram(Ntime,Nxspace,Nshot,infilename,select_folder,SeismMatrix)
   ! Load a Seismogram from a binary file
   ! 
   ! INPUT:  ../select_folder/outfile_SeismogramShot.bin
@@ -478,10 +478,9 @@ SUBROUTINE LoadSeismogram(Ntime,Nxspace,Nshot,infilename,select_folder,myID,proc
   INTEGER                                        :: kk,ii              !Counter   
   LOGICAL                                        :: fileSeis           !Check if file exists
 
-  CHARACTER*(10),INTENT(in)                      :: proc_name          !processor name
-  CHARACTER(LEN=60),INTENT(in)                   :: select_folder      !folder
-  CHARACTER(LEN=40),INTENT(in)                   :: infilename         !output filename pattern
-  INTEGER,INTENT(in)                             :: Nxspace,Ntime,Nshot,MyID
+  CHARACTER(LEN= *),INTENT(in)                   :: select_folder      !folder
+  CHARACTER(LEN= *),INTENT(in)                   :: infilename         !output filename pattern
+  INTEGER,INTENT(in)                             :: Nxspace,Ntime,Nshot
 
   REAL, DIMENSION(Ntime,Nxspace),INTENT(out)     :: SeismMatrix       !Seismogram
 
@@ -492,12 +491,12 @@ SUBROUTINE LoadSeismogram(Ntime,Nxspace,Nshot,infilename,select_folder,myID,proc
 
   write(num_shot,"(i3.3)")Nshot ! write shot counter in string to write differentes Seismograms
 
-  INQUIRE(file=trim(select_folder)//trim(infilename)//'_Seismogram'//num_shot//'.bin',&
+  INQUIRE(file=trim(select_folder)//trim(infilename)//'_sismograma'//num_shot//'.bin',&
        exist=fileSeis) !verify if parameters file exist
 
   if (fileSeis) then
 
-     OPEN(11, FILE=trim(select_folder)//trim(infilename)//'_Seismogram'//num_shot//'.bin', STATUS='unknown',&
+     OPEN(11, FILE=trim(select_folder)//trim(infilename)//'_sismograma'//num_shot//'.bin', STATUS='unknown',&
           &FORM='unformatted',ACCESS='direct', RECL=(Ntime*Nxspace*4))
      read(11,rec=1) ((SeismMatrix(kk,ii),kk=1,Ntime),ii=1,Nxspace)
      close(11)
@@ -507,7 +506,7 @@ SUBROUTINE LoadSeismogram(Ntime,Nxspace,Nshot,infilename,select_folder,myID,proc
 
      print*, ''
      print*,'============================================================================='
-     print*, 'Seismogram ',num_shot, ' NOT FOUND. Do you have sure that this Seismogram'
+     print*, 'Seismogram ',infilename,num_shot, ' NOT FOUND. Do you have sure that this Seismogram'
      print*, ' is in the folder:', select_folder, '? Please, if you not sure'
      print*, 'check the folder and try again.'
      print*,'============================================================================='
@@ -725,73 +724,6 @@ SUBROUTINE ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
 
   do i = 1,Nx
      do j = 1,Nz
-        if (abs(P(j,i)) > abs(ATTM(j,i))) then
-           ATTM(j,i) = P(j,i)
-           TTM(j,i)  = k 
-        end if
-     end do
-  end do
-  RETURN
-END SUBROUTINE TransitTimeMatrix
-
-!***********************************************************************************
-!***************************** IMAGING CONDITION ***********************************
-!***********************************************************************************
-
-SUBROUTINE ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
-  IMPLICIT NONE
-
-  INTEGER                              :: i,j
-
-  INTEGER,INTENT(in)                   :: Nx,Nz,k
-  REAL,DIMENSION(Nz,Nx),INTENT(in)     :: P,TTM
-  REAL,DIMENSION(Nz,Nx),INTENT(inout)  :: Image
-
-
-  do i = 1,Nx
-     do j = 1,Nz
-
-        if (k == TTM(j,i)) then
-           Image(j,i) = P(j,i)
-        end if
-
-     end do
-  end do
-
-  RETURN
-END SUBROUTINE ImagingConditionMaxAmP
-
-    INTEGER                                :: i,j
-    INTEGER,INTENT(in)                     :: Nx,Nz,k
-   
-    REAL,DIMENSION(Nz,Nx),INTENT(inout)    :: P,TTM,ATTM
-
-    do i = 1,Nx
-       do j = 1,Nz
-          if (abs(P(j,i)) > abs(ATTM(j,i))) then
-             ATTM(j,i) = P(j,i)
-             TTM(j,i)  = k 
-          end if
-       end do
-    end do
-    RETURN
-  END SUBROUTINE TransitTimeMatrix
-
-
-!***********************************************************************************
-!!**************************** WRITING MATRIX **************************************
-!***********************************************************************************
-
-SUBROUTINE writematrix(Nz,Nx,shot,Matrix,outfile,folder)
-  IMPLICIT NONE
->>>>>>> 163b9ea8330b217dc72a6935e38940b16a01b6bf
-
-  CHARACTER(len=3)                    :: num_shot
-  CHARACTER(LEN=*),INTENT(in)         :: outfile,folder
-
-<<<<<<< HEAD
-  do i = 1,Nx
-     do j = 1,Nz
 
         if (k == TTM(j,i)) then
            Image(j,i) = P(j,i)
@@ -805,7 +737,7 @@ END SUBROUTINE ImagingConditionMaxAmP
 
 
 !***********************************************************************************
-!!**************************** WRITING MATRIX **************************************
+!***************************** WRITING MATRIX **************************************
 !***********************************************************************************
 
 SUBROUTINE writematrix(Nz,Nx,shot,Matrix,outfile,folder)
@@ -831,17 +763,34 @@ SUBROUTINE writematrix(Nz,Nx,shot,Matrix,outfile,folder)
 
 END SUBROUTINE writematrix
 
+!*********************************************************************************
+!************************ REMOVE ONDA DIRETA *************************************
+!*********************************************************************************
+
+SUBROUTINE removeondadireta(Nt,Nx,shot)
+
+ IMPLICIT NONE
+
+ INTEGER,INTENT(in)      :: Nx,Nt,shot
+
+ REAL, DIMENSION(Nt,Nx)  :: Sismograma_Homogeneo,Sismograma_Real,Sismograma_sem_onda_direta !Seismogram
 
 
-SUBROUTINE REMOVEONDADIRETA()
+!Ler Sismograma Homogeneo
 
+  CALL LoadSeismogram(Nt,Nx,shot,"Homogeneo","../sismograma_modelo_camada_de_agua/",Sismograma_Homogeneo)
 
-!Ler Sismograma REal
-!Ler Sismograma modelo homeneo
+!Ler Sismograma Real
 
-!Sismograma_sem_onda_direta = Sismograma_real -Sismogram_homo
+  CALL LoadSeismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Sismograma_Real)
+
+! Retira a onda direta
+
+Sismograma_sem_onda_direta = Sismograma_Real - Sismograma_Homogeneo
 
 !grava sismograma sem onda direta
 
-END SUBROUTINE REMOVEONDADIRETA
+CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma_sem_onda_direta/",Sismograma_sem_onda_direta)
+
+END SUBROUTINE removeondadireta
  
