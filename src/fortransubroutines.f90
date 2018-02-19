@@ -2,7 +2,8 @@
 !************************* Modelagem ***********************************************
 !***********************************************************************************
 
-SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM)
+
+SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM)
 
 
   ! SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o 
@@ -12,23 +13,20 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
 
   !Veja linha 29
 
-  !Na duvida leia: https://stackoverflow.com/questions/35528927/f2py-order-of-function-arguments-messed-u
+  !Na duvida leia: https://stackoverflow.com/questions/35528927/f2py-order-of-function-arguments-messed-up
 
-! PROBLEMA POSSIVELMENTE RESOLVIDO: O Nfonte e tratado pela f2py como um argumento opcional portanto nao precisamos chama-lo na funcao do python, somente no fortran. Isso porque o Nfonte ja indentificado como tamanho do vetor
-
-!Veja linha 26
-
-!Na duvida leia: https://stackoverflow.com/questions/35528927/f2py-order-of-function-arguments-messed-up
 
   IMPLICIT NONE  
 
   INTEGER                        :: k,aux
   INTEGER                        :: Nzz,Nxx                     !Expanded dimensions
+  CHARACTER(len=256)             :: caminho_modelo
 
   INTEGER,INTENT(in)             :: Nsnap
   INTEGER                        :: count_snap
   INTEGER,INTENT(in)             :: shot,shotshow,NSx,NSz,Nfonte     ! Related source
   INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
+
   INTEGER,INTENT(in)             :: regTTM                         ! Condition Transit Time Matrix
 
 
@@ -38,7 +36,6 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
   REAL,DIMENSION(Nt,Nx)          :: Seism                             
   REAL,DIMENSION(Nz,Nx)          :: TTM, ATTM                        !Related Transit Time Matrix
   REAL,ALLOCATABLE,DIMENSION(:,:):: P,Pf,vel                          
- 
 
   Nxx = NpCA + Nx + NpCA
   Nzz = Nz + NpCA
@@ -47,55 +44,12 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
   ALLOCATE(Pf(Nzz,Nxx))
   ALLOCATE(vel(Nzz,Nxx))
 
-
-                                                                      
-  REAL,INTENT(in)                :: dh,dt                            
-  REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
-  REAL,DIMENSION(NpCA)           :: func_Am                           
-  REAL,DIMENSION(Nz,Nx)          :: P,Pf,vel                          
-  REAL,DIMENSION(Nt,Nx)          :: Seism                             
-  REAL,DIMENSION(Nz,Nx)          :: TTM, ATTM                        !Related Transit Time Matrix
-
-  
-
   ! Load Damping Function
   open(20,file='f_amort.dat',&
        status='unknown',form='formatted')
   do k=1,NpCA
      read(20,*)func_Am(k)
   end do
-
-  !   write(*,*)" Nz       ", Nz       
-  !   write(*,*)" Nx       ", Nx       
-  !   write(*,*)" Nt       ", Nt       
-  !   write(*,*)" dh       ", dh       
-  !   write(*,*)" dt       ", dt       
-  !   write(*,*)" NpCA     ", NpCA     
-  !   write(*,*)" shot     ", shot     
-  !   write(*,*)" shotshow ", shotshow 
-  !   write(*,*)" NSx      ", NSx      
-  !   write(*,*)" NSz      ", NSz      
-  !   write(*,*)" fonte    ", fonte    
-  ! write(*,*)" Nfonte   ", Nfonte   
-  ! write(*,*)" Nsnap    ", Nsnap  
-  ! write(*,*) "regTTM", regTTM
-
-
-!   write(*,*)" Nz       ", Nz       
-!   write(*,*)" Nx       ", Nx       
-!   write(*,*)" Nt       ", Nt       
-!   write(*,*)" dh       ", dh       
-!   write(*,*)" dt       ", dt       
-!   write(*,*)" NpCA     ", NpCA     
-!   write(*,*)" shot     ", shot     
-!   write(*,*)" shotshow ", shotshow 
-!   write(*,*)" NSx      ", NSx      
-!   write(*,*)" NSz      ", NSz      
-!   write(*,*)" fonte    ", fonte    
-! write(*,*)" Nfonte   ", Nfonte   
-! write(*,*)" Nsnap    ", Nsnap  
-! write(*,*) "regTTM", regTTM
-  
 
   aux = Nsnap
   aux = Nt/aux              ! evaluate number of snapshots
@@ -104,21 +58,18 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
   TTM = 0.0
   ATTM = 0.0 
 
-!   ! revisar nome de entrada do modelo
+ ! revisar nome de entrada do modelo
 
-!   CALL  LoadVelocityModel(Nz,Nx,'../modelo_real/marmousi_vp_383x141.bin',vel)
+caminho_modelo = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
+
+  !  CALL  LoadVelocityModel(Nz,Nx,'../modelo_real/marmousi_vp_383x141.bin',vel)
+  !  CALL  LoadVelocityModel(Nz,Nx,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
 
  ! CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_real/marmousi_vp_383x141.bin',vel)
-  CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
+  CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,trim(caminho_modelo),vel)
  ! CALL  LoadVelocityModel(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
 
-  ! revisar nome de entrada do modelo
   
-!  CALL  LoadVelocityModel(Nz,Nx,'../modelo_real/marmousi_vp_383x141.bin',vel)
-
-   CALL  LoadVelocityModel(Nz,Nx,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
-
-
   P    = 0.0                   !Pressure field
   Pf   = 0.0                   !Pressure field in future  
 
@@ -137,35 +88,104 @@ SUBROUTINE modelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsna
      CALL ReynoldsEngquistNSG(Nzz,Nxx,dh,dt,vel,P,Pf)
 
      ! Revisar posicionamento dos receptores
-      Seism(k,:) = P(10,NpCA+1:NpCA+Nx)
-  
+
+     if (regTTM == 0) then
+       Seism(k,:) = P(10,NpCA+1:NpCA+Nx)
+     end if 
      
      if ( (mod(k,aux)==0)  .and. shotshow >0 .and. shotshow == shot) then 
         ! print *, "k=",k , "time=", (k-1)*dt
 
         CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi",P(1:Nz,NpCA+1:NpCA+Nx))
      end if
-
+     
      if (regTTM == 1) then 
-        CALL TransitTimeMatrix(Nz,Nx,k,P(1:Nz,NpCA+1:NpCA+Nx),TTM,ATTM,shot)
+         CALL TransitTimeMatrix(Nz,Nx,k,P(1:Nz,NpCA+1:NpCA+Nx),TTM,ATTM,shot)
+     end if
+
+    end do
+
+    if (regTTM == 0) then
+      CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
+      !CALL Seismogram(Nt,Nx,shot,"Homogeneo","../sismogramas_modelo_camada_de_agua/",Seism)
     end if
-   end do
+    
+    if (regTTM == 1) then
+     CALL writematrix(Nz,Nx,shot,TTM, "Marmousi","../matriz_tempo_transito/")
+    end if
 
-        CALL snap(Nz,Nx,count_snap,shotshow,"Marmousi",P)
-     end if
+END SUBROUTINE nucleomodelagem
 
-     if (regTTM == 1) then 
-        CALL TransitTimeMatrix(Nz,Nx,k,P,TTM,ATTM,shot)
-     end if
-  end do
+
+!***********************************************************************************
+!************************* Migracao ************************************************
+!***********************************************************************************  
+
+SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr)
+
+  IMPLICIT NONE  
+
+  INTEGER                        :: k,aux
+  INTEGER                        :: Nzz,Nxx                     !Expanded dimensions
+  CHARACTER(len=256)             :: caminho_modelo
+
+  INTEGER,INTENT(in)             :: Nsnap
+  INTEGER                        :: count_snap
+  INTEGER,INTENT(in)             :: shot,shotshow,NSx,NSz,Nfonte     ! Related source
+  INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
+
+  INTEGER,INTENT(in)             :: regTTM                         ! Condition Transit Time Matrix
+
+
+  REAL,INTENT(in)                :: dh,dt                            
+  REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
+  REAL,DIMENSION(NpCA)           :: func_Am                           
+  REAL,DIMENSION(Nt,Nx)          :: Seism                             
+  REAL,DIMENSION(Nz,Nx)          :: TTM, ATTM                        !Related Transit Time Matrix
+  REAL,ALLOCATABLE,DIMENSION(:,:):: P,Pf,vel                          
+
+  Nxx = NpCA + Nx + NpCA
+  Nzz = Nz + NpCA
   
-  CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
+  ALLOCATE(P(Nzz,Nxx))
+  ALLOCATE(Pf(Nzz,Nxx))
+  ALLOCATE(vel(Nzz,Nxx))
 
-  CALL writematrix(Nz,Nx,shot,TTM, "Marmousi","../matriz_tempo_transito/")
+  ! Load Damping Function
+  open(20,file='f_amort.dat',&
+       status='unknown',form='formatted')
+  do k=1,NpCA
+     read(20,*)func_Am(k)
+  end do
 
-END SUBROUTINE modelagem
+  caminho_modelo = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
+
+  CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,trim(caminho_modelo),vel)
+
+  P    = 0.0                   !Pressure field
+  Pf   = 0.0                   !Pressure field in future  
+
+  CALL LoadSeismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Sismograma_sem_onda_direta)
+
+  do k = Nt,-1,1
+       P(zr,1:Nx) =  Sismograma_sem_onda_direta(k,1:Nx)
+
+       CALL operador_quarta_ordem(Nzz,Nxx,dh,dt,vel,P,Pf)
+
+       CALL  Updatefield(Nzz,Nxx,P,Pf)
+
+       CALL CerjanNSG(Nzz,Nxx,NpCA,func_Am,P,Pf)            
+
+       CALL ReynoldsEngquistNSG(Nzz,Nxx,dh,dt,vel,P,Pf)
+       
+       CALL ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
+       
+       CALL writematrix(Nz,Nx,shot,Matrix,"Imagem","../Imagem")
+
+  end do
 
 
+END SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA)
 
 !***********************************************************************************
 !************************* 4nd ORDER OPERATOR IN SPACE******************************
@@ -493,6 +513,84 @@ SUBROUTINE Seismogram(Ntime,Nxspace,Nshot,outfilename,select_folder,Seismmatrix)
   RETURN
 END SUBROUTINE Seismogram
 
+
+!************************************************************************************
+!************************* LOADING SEISMOGRAM  *************************************
+!***********************************************************************************
+SUBROUTINE LoadSeismogram(Ntime,Nxspace,Nshot,infilename,select_folder,SeismMatrix)
+  ! Load a Seismogram from a binary file
+  ! 
+  ! INPUT:  ../select_folder/outfile_SeismogramShot.bin
+  ! 
+  ! Ntime         = Total Number of Samples in Time
+  ! Nxspace       = Total Number of Grid Points in X direction
+  ! Nshot         = Shot Number
+  ! infilename   = Prefix in Seismogram filename
+  ! 
+  ! select_folder = Folder of Seismogram file
+  ! myID          = Number of identification of process (MPI Parameter)
+  ! proc_name     = Name of processor (MPI Parameter)
+  ! SeismMatrix   = Matrix (Nt,Nx) that will receive Seismogram
+  ! 
+  ! OUTPUT: None
+  ! 
+  ! Code Written by Felipe Timoteo
+  !                 Last update: May 23th, 2016
+  !
+  ! Copyright (C) 2017 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
+  !                    Departamento de Geologia e Geofísica
+  !                    Universidade Federal Fluminense
+
+
+  IMPLICIT NONE
+  CHARACTER(len=3)                               :: num_shot           !write differents files
+  INTEGER                                        :: kk,ii              !Counter   
+  LOGICAL                                        :: fileSeis           !Check if file exists
+
+  CHARACTER(LEN= *),INTENT(in)                   :: select_folder      !folder
+  CHARACTER(LEN= *),INTENT(in)                   :: infilename         !output filename pattern
+  INTEGER,INTENT(in)                             :: Nxspace,Ntime,Nshot
+
+  REAL, DIMENSION(Ntime,Nxspace),INTENT(out)     :: SeismMatrix       !Seismogram
+
+  ! print*,'...............................................'
+  ! write(*,"(A11,A10,A1,i3,A22,i3)"), 'Processor:',proc_name,'-',myID,'Loading Seismogram',Nshot
+  ! write(*,"(A14,A20,A3)"),'in the folder ',select_folder ,'...'
+  ! print*,'...............................................'
+
+  write(num_shot,"(i3.3)")Nshot ! write shot counter in string to write differentes Seismograms
+
+  INQUIRE(file=trim(select_folder)//trim(infilename)//'_sismograma'//num_shot//'.bin',&
+       exist=fileSeis) !verify if parameters file exist
+
+  if (fileSeis) then
+
+     OPEN(11, FILE=trim(select_folder)//trim(infilename)//'_sismograma'//num_shot//'.bin', STATUS='unknown',&
+          &FORM='unformatted',ACCESS='direct', RECL=(Ntime*Nxspace*4))
+     read(11,rec=1) ((SeismMatrix(kk,ii),kk=1,Ntime),ii=1,Nxspace)
+     close(11)
+
+  else
+
+
+     print*, ''
+     print*,'============================================================================='
+     print*, 'Seismogram ',infilename,num_shot, ' NOT FOUND. Do you have sure that this Seismogram'
+     print*, ' is in the folder:', select_folder, '? Please, if you not sure'
+     print*, 'check the folder and try again.'
+     print*,'============================================================================='
+     print*, ''
+     print*, 'PRESS RETURN TO EXIT...   '
+     read(*,*)
+     stop
+
+  end if
+
+  RETURN
+END SUBROUTINE LoadSeismogram
+
+
+
 !***********************************************************************************  
 !**************************** SNAPSHOT *********************************************
 !***********************************************************************************
@@ -706,25 +804,9 @@ SUBROUTINE ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
   RETURN
 END SUBROUTINE ImagingConditionMaxAmP
 
-    INTEGER                                :: i,j
-    INTEGER,INTENT(in)                     :: Nx,Nz,k
-   
-    REAL,DIMENSION(Nz,Nx),INTENT(inout)    :: P,TTM,ATTM
-
-    do i = 1,Nx
-       do j = 1,Nz
-          if (abs(P(j,i)) > abs(ATTM(j,i))) then
-             ATTM(j,i) = P(j,i)
-             TTM(j,i)  = k 
-          end if
-       end do
-    end do
-    RETURN
-  END SUBROUTINE TransitTimeMatrix
-
 
 !***********************************************************************************
-!!**************************** WRITING MATRIX **************************************
+!***************************** WRITING MATRIX **************************************
 !***********************************************************************************
 
 SUBROUTINE writematrix(Nz,Nx,shot,Matrix,outfile,folder)
@@ -747,35 +829,37 @@ SUBROUTINE writematrix(Nz,Nx,shot,Matrix,outfile,folder)
   write(12,rec=1) Matrix !write  matrix    
   close(12)
 
-
-    RETURN
-  END SUBROUTINE ImagingConditionMaxAmP
-
-
-!***********************************************************************************
-!!**************************** WRITING MATRIX **************************************
-!***********************************************************************************
-
-SUBROUTINE writematrix(Nz,Nx,shot,Matrix,outfile,folder)
-  IMPLICIT NONE
-
-  CHARACTER(len=3)                    :: num_shot
-  CHARACTER(LEN=*),INTENT(in)         :: outfile,folder
-  
-  INTEGER,INTENT(in)                  :: Nz
-  INTEGER,INTENT(in)                  :: Nx
-   INTEGER,INTENT(in)                 :: shot
-  REAL,DIMENSION(Nz,Nx), INTENT(in)   :: Matrix
-
-write(num_shot,"(i3.3)")shot         !write shot counter in string   
-
-OPEN(12, FILE=trim(folder)//trim(outfile)//'_shot'//num_shot //'.bin', STATUS='unknown',&
-       &FORM='unformatted',ACCESS='direct', RECL=(Nz*Nx*4))
-
-
-write(12,rec=1) Matrix !write  matrix    
-close(12)
-
-
-
 END SUBROUTINE writematrix
+
+
+!*********************************************************************************
+!************************ REMOVE ONDA DIRETA *************************************
+!*********************************************************************************
+
+SUBROUTINE removeondadireta(Nt,Nx,shot)
+
+ IMPLICIT NONE
+
+ INTEGER,INTENT(in)      :: Nx,Nt,shot
+
+ REAL, DIMENSION(Nt,Nx)  :: Sismograma_Homogeneo,Sismograma_Real,Sismograma_sem_onda_direta !Seismogram
+
+
+!Ler Sismograma Homogeneo
+
+  CALL LoadSeismogram(Nt,Nx,shot,"Homogeneo","../sismograma_modelo_camada_de_agua/",Sismograma_Homogeneo)
+
+!Ler Sismograma Real
+
+  CALL LoadSeismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Sismograma_Real)
+
+! Retira a onda direta
+
+Sismograma_sem_onda_direta = Sismograma_Real - Sismograma_Homogeneo
+
+!grava sismograma sem onda direta
+
+CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma_sem_onda_direta/",Sismograma_sem_onda_direta)
+
+END SUBROUTINE removeondadireta
+ 

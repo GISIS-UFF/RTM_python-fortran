@@ -86,12 +86,6 @@ def plotseism(Sismograma,Nt,Nx):
       imshow(Sismograma,aspect="auto",cmap = cm.gray, extent = [1,parametro.Nx,parametro.T,0])
       xlabel('Canal') 
       ylabel('Tempo (segundos)')
-
-      from matplotlib.pylab import figure, imshow, draw, cm
-
-      figure()    
-      imshow(Sismograma,aspect="auto",cmap = cm.gray)
-
       draw()
 
 
@@ -133,13 +127,13 @@ def amort(fat_amort,n_grid):
 	savetxt('f_amort.dat',w, delimiter='.')
         return w
         
-def main():      
+def modelagemacustica(regTTM):      
       '''
       Main program is here      
       '''
       from numpy import loadtxt,size
       from fortransubroutines import wavelet
-      from fortransubroutines import modelagem
+      from fortransubroutines import nucleomodelagem
       
       
       # Modelo de Velocidade
@@ -172,11 +166,8 @@ def main():
       # Modelagem
       
       Fx = int(parametro.Nx/2)               # Posicao da Fonte (x)
-      Fz = int(parametro.Nz/2) #10           # Posicao da Fonte (z)
-      
-      # Parametro para registrar ou nao a matriz de tempo de transito
+      Fz = 5  #int(parametro.Nz/2) #10       # Posicao da Fonte (z)
 
-      regTTM = 1
 
       # print 'parametro.Nz       ' ,parametro.Nz       
       # print 'parametro.Nx       ' ,parametro.Nx       
@@ -192,29 +183,36 @@ def main():
       # print 'parametro.Nsnap    ' ,parametro.Nsnap                          
       # print np.size(fonte),np.size(func_amort)
 
-      modelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
-                parametro.h,parametro.dt,parametro.nat,\
-                parametro.shot,parametro.shotshow,\
-                Fx,Fz,fonte,parametro.Nsnap,regTTM)
+      nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
+                      parametro.h,parametro.dt,parametro.nat,\
+                      parametro.shot,parametro.shotshow,\
+                      Fx,Fz,fonte,parametro.Nsnap,regTTM)
+      
 
       # SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o
       # Esse problema esta na linha 5 do codigo em fortran
 
       #Problema Resolvido: Olhar o codigo em fortran: linha 10 a linha 14!
 
-      Sismograma = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma/Marmousi_sismograma001.bin")
- 
-      plotseism(Sismograma,parametro.T,parametro.Nx)
+      if regTTM == 0:
+            Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma/Marmousi_sismograma001.bin")
 
+            plotseism(Sismograma_Real,parametro.T,parametro.Nx)
 
-      matriz_tempo_transito = readbinaryfile(parametro.Nz,parametro.Nx,"../matriz_tempo_transito/Marmousi_shot001.bin")
+            Sismograma_H = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma_modelo_camada_de_agua/Homogeneo_sismograma001.bin")
       
-      plotmodel(matriz_tempo_transito)
-   
+            plotseism(Sismograma_H,parametro.T,parametro.Nx)
+
+      
+      if regTTM == 1:
+            matriz_tempo_transito = readbinaryfile(parametro.Nz,parametro.Nx,"../matriz_tempo_transito/Marmousi_shot001.bin")
+      
+            plotmodel(matriz_tempo_transito)
 
       if parametro.shotshow > 0:
             plotsnaps(parametro.Nz,parametro.Nx) 
-    
+
+  
 if __name__ == '__main__':
     
       """
@@ -222,14 +220,23 @@ if __name__ == '__main__':
       """
     
       from matplotlib.pylab import show
+      from fortransubroutines import removeondadireta
       import time
       import parametro
-
       
+
+      regTTM = 1
+
       start_time = time.time()
 
 
-      main() # Call main function
+      modelagemacustica(regTTM) # Call main function
+
+      removeondadireta(parametro.Nt,parametro.Nx,parametro.shot)
+      Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma_sem_onda_direta/Marmousi_sismograma001.bin")
+      plotseism(Sismograma,parametro.T,parametro.Nx)
+      
+      #migracao()
 
       elapsed_time_python = time.time() - start_time
       print ("Tempo de processamento python = ", elapsed_time_python, "s")
