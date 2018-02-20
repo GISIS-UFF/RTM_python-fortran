@@ -121,28 +121,27 @@ END SUBROUTINE nucleomodelagem
 !************************* Migracao ************************************************
 !***********************************************************************************  
 
-SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr)
+SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot)
 
   IMPLICIT NONE  
 
-  INTEGER                        :: k,aux
+  INTEGER                        :: k
   INTEGER                        :: Nzz,Nxx                     !Expanded dimensions
   CHARACTER(len=256)             :: caminho_modelo
 
-  INTEGER,INTENT(in)             :: Nsnap
-  INTEGER                        :: count_snap
-  INTEGER,INTENT(in)             :: shot,shotshow,NSx,NSz,Nfonte     ! Related source
+  !INTEGER,INTENT(in)             :: Nsnap
+  !INTEGER                        :: count_snap
+  INTEGER,INTENT(in)             :: shot!,shotshow               ! Related source
   INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
 
-  INTEGER,INTENT(in)             :: regTTM                         ! Condition Transit Time Matrix
+  REAL,DIMENSION(NpCA)           :: func_Am 
+  INTEGER,INTENT(in)             :: zr                         ! Condition Transit Time Matrix
 
 
-  REAL,INTENT(in)                :: dh,dt                            
-  REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
-  REAL,DIMENSION(NpCA)           :: func_Am                           
-  REAL,DIMENSION(Nt,Nx)          :: Seism                             
-  REAL,DIMENSION(Nz,Nx)          :: TTM, ATTM                        !Related Transit Time Matrix
-  REAL,ALLOCATABLE,DIMENSION(:,:):: P,Pf,vel                          
+  REAL,INTENT(in)                 :: dh,dt                                                         
+  REAL,DIMENSION(Nt,Nx)           :: Seism                             
+  REAL,DIMENSION(Nz,Nx)           :: TTM                        !Related Transit Time Matrix
+  REAL,ALLOCATABLE,DIMENSION(:,:) :: P,Pf,vel,Imagem                        
 
   Nxx = NpCA + Nx + NpCA
   Nzz = Nz + NpCA
@@ -150,6 +149,7 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr)
   ALLOCATE(P(Nzz,Nxx))
   ALLOCATE(Pf(Nzz,Nxx))
   ALLOCATE(vel(Nzz,Nxx))
+  ALLOCATE(Imagem (Nz,Nx))
 
   ! Load Damping Function
   open(20,file='f_amort.dat',&
@@ -160,32 +160,36 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr)
 
   caminho_modelo = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
 
-  CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,trim(caminho_modelo),vel)
+! Abrindo o Modelo Suavizado, Sismograma sem a onda direta e a Matriz de Tempo de Transito
+
+  
+  CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,trim(caminho_modelo),vel)
+  CALL  LoadSeismogram(Nt,Nx,shot,"Marmousi","../sismograma_sem_onda_direta/",Seism)
+  CALL  LoadVelocityModel(Nz,Nx,'../matriz_tempo_transito/Marmousi_shot001.bin',TTM)
 
   P    = 0.0                   !Pressure field
   Pf   = 0.0                   !Pressure field in future  
+  Imagem = 0.0
 
-  CALL LoadSeismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Sismograma_sem_onda_direta)
+  do k = Nt,1,-1
 
-  do k = Nt,-1,1
-       P(zr,1:Nx) =  Sismograma_sem_onda_direta(k,1:Nx)
+       P(zr,1:Nx) =  Seism(k,1:Nx) + P(zr,1:Nx)
 
        CALL operador_quarta_ordem(Nzz,Nxx,dh,dt,vel,P,Pf)
 
-       CALL  Updatefield(Nzz,Nxx,P,Pf)
+       CALL Updatefield(Nzz,Nxx,P,Pf)
 
        CALL CerjanNSG(Nzz,Nxx,NpCA,func_Am,P,Pf)            
 
        CALL ReynoldsEngquistNSG(Nzz,Nxx,dh,dt,vel,P,Pf)
        
-       CALL ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
+       CALL ImagingConditionMaxAmP(k,Nz,Nx,P(1:Nz,NpCA+1:NpCA+Nx),TTM,Imagem)
        
-       CALL writematrix(Nz,Nx,shot,Matrix,"Imagem","../Imagem")
-
   end do
+  
+       CALL writematrix(Nz,Nx,shot,Imagem,"Imagem_Marmousi","../Imagem/")
 
-
-END SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA)
+END SUBROUTINE migracao
 
 !***********************************************************************************
 !************************* 4nd ORDER OPERATOR IN SPACE******************************
@@ -782,6 +786,7 @@ END SUBROUTINE TransitTimeMatrix
 !***********************************************************************************
 
 SUBROUTINE ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
+
   IMPLICIT NONE
 
   INTEGER                              :: i,j

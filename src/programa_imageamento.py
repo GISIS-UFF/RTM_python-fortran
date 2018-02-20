@@ -69,10 +69,10 @@ def plotgraphics(ID,filename,color):
 	
 def plotmodel(matrix):
 
-      from matplotlib.pylab import figure, imshow, colorbar, draw
+      from matplotlib.pylab import figure, imshow, colorbar, draw,cm
 
       figure()
-      imshow(matrix,cmap='jet')
+      imshow(matrix,cmap=cm.gray)
       colorbar()
       draw() # drawing figure to be plotted later
       
@@ -84,8 +84,6 @@ def plotseism(Sismograma,Nt,Nx):
       ax = fig.add_subplot(1, 1, 1)
       ax.xaxis.set_ticks_position("top")    
       imshow(Sismograma,aspect="auto",cmap = cm.gray, extent = [1,parametro.Nx,parametro.T,0])
-      xlabel('Canal') 
-      ylabel('Tempo (segundos)')
       draw()
 
 
@@ -140,7 +138,7 @@ def modelagemacustica(regTTM):
 
      # C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modelohomogeneo)
-      plotmodel(C)    
+     # plotmodel(C)    
       
       # Condicao de estabilidade e dispersao
       
@@ -154,8 +152,8 @@ def modelagemacustica(regTTM):
       plotgraphics(2,'wavelet_ricker.dat', 'k')
       
       lixo, fonte = loadtxt('wavelet_ricker.dat', unpack = True)
-     # Nfonte      = size(fonte)
-      Nfonte = 2364
+      Nfonte      = size(fonte)
+      
 
       # Funcao Amortecedora
       
@@ -169,20 +167,6 @@ def modelagemacustica(regTTM):
       Fz = 5  #int(parametro.Nz/2) #10       # Posicao da Fonte (z)
 
 
-      # print 'parametro.Nz       ' ,parametro.Nz       
-      # print 'parametro.Nx       ' ,parametro.Nx       
-      # print 'parametro.Nt       ' ,parametro.Nt       
-      # print 'parametro.h        ' ,parametro.h
-      # print 'parametro.dt       ' ,parametro.dt       
-      # print 'parametro.nat      ' ,parametro.nat     
-      # print 'parametro.shot     ' ,parametro.shot     
-      # print 'parametro.shotshow ' ,parametro.shotshow
-      # print 'Fx                 ' ,Fx
-      # print 'Fz                 ' ,Fz
-      # print 'Nfonte             ' ,Nfonte
-      # print 'parametro.Nsnap    ' ,parametro.Nsnap                          
-      # print np.size(fonte),np.size(func_amort)
-
       nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
                       parametro.h,parametro.dt,parametro.nat,\
                       parametro.shot,parametro.shotshow,\
@@ -192,7 +176,7 @@ def modelagemacustica(regTTM):
       # SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o
       # Esse problema esta na linha 5 do codigo em fortran
 
-      #Problema Resolvido: Olhar o codigo em fortran: linha 10 a linha 14!
+      #Problema Resolvido: Olhar o codigo em fortran: da linha 10 a linha 14!
 
       if regTTM == 0:
             Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma/Marmousi_sismograma001.bin")
@@ -220,7 +204,7 @@ if __name__ == '__main__':
       """
     
       from matplotlib.pylab import show
-      from fortransubroutines import removeondadireta
+      from fortransubroutines import removeondadireta, migracao
       import time
       import parametro
       
@@ -230,13 +214,16 @@ if __name__ == '__main__':
       start_time = time.time()
 
 
-      modelagemacustica(regTTM) # Call main function
+      #modelagemacustica(regTTM) # Call main function
 
-      removeondadireta(parametro.Nt,parametro.Nx,parametro.shot)
-      Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma_sem_onda_direta/Marmousi_sismograma001.bin")
-      plotseism(Sismograma,parametro.T,parametro.Nx)
+      #removeondadireta(parametro.Nt,parametro.Nx,parametro.shot)
+      #Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma_sem_onda_direta/Marmousi_sismograma001.bin")
+      #plotseism(Sismograma,parametro.T,parametro.Nx)
       
-      #migracao()
+      migracao(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,parametro.nat,parametro.zr,parametro.shot)
+     
+      Imagem  =  readbinaryfile(parametro.Nz,parametro.Nx,"../Imagem/Imagem_Marmousi_shot001.bin")     
+      plotmodel(Imagem)
 
       elapsed_time_python = time.time() - start_time
       print ("Tempo de processamento python = ", elapsed_time_python, "s")
