@@ -67,12 +67,12 @@ def plotgraphics(ID,filename,color):
             
         return 
 	
-def plotmodel(matrix):
+def plotmodel(matrix,colormap):
 
       from matplotlib.pylab import figure, imshow, colorbar, draw,cm
 
       figure()
-      imshow(matrix,cmap=cm.gray)
+      imshow(matrix,cmap= colormap)
       colorbar()
       draw() # drawing figure to be plotted later
       
@@ -125,20 +125,22 @@ def amort(fat_amort,n_grid):
 	savetxt('f_amort.dat',w, delimiter='.')
         return w
         
-def modelagemacustica(regTTM):      
+def modelagem_acustica(regTTM):      
       '''
       Main program is here      
       '''
       from numpy import loadtxt,size
+      from matplotlib.pylab import cm
       from fortransubroutines import wavelet
       from fortransubroutines import nucleomodelagem
       
       
-      # Modelo de Velocidade
+      # Modelo de Velocidade Usado
 
-     # C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
-      C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modelohomogeneo)
-     # plotmodel(C)    
+      C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
+      #C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modelohomogeneo)
+
+      plotmodel(C,'jet')    
       
       # Condicao de estabilidade e dispersao
       
@@ -191,12 +193,36 @@ def modelagemacustica(regTTM):
       if regTTM == 1:
             matriz_tempo_transito = readbinaryfile(parametro.Nz,parametro.Nx,"../matriz_tempo_transito/Marmousi_shot001.bin")
       
-            plotmodel(matriz_tempo_transito)
+            plotmodel(matriz_tempo_transito,'jet')
 
       if parametro.shotshow > 0:
+            plotsnaps(parametro.Nz,parametro.Nx)
+ 
+def remove_onda_direta():
+      
+      from fortransubroutines import removeondadireta
+
+      removeondadireta(parametro.Nt,parametro.Nx,parametro.shot)
+
+      Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma_sem_onda_direta/Marmousi_sismograma001.bin")
+      plotseism(Sismograma,parametro.T,parametro.Nx)
+  
+
+def migracao_rtm():
+
+      from matplotlib.pylab import cm
+      from fortransubroutines import migracao
+
+      migracao(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,parametro.nat,\
+               parametro.zr,parametro.shot,parametro.shotshow,parametro.Nsnap)
+     
+      Imagem  =  readbinaryfile(parametro.Nz,parametro.Nx,"../Imagem/Imagem_Marmousi_shot001.bin")     
+      plotmodel(Imagem,cm.gray)
+      
+      if parametro.shotshow  > 0:
             plotsnaps(parametro.Nz,parametro.Nx) 
 
-  
+
 if __name__ == '__main__':
     
       """
@@ -204,7 +230,6 @@ if __name__ == '__main__':
       """
     
       from matplotlib.pylab import show
-      from fortransubroutines import removeondadireta, migracao
       import time
       import parametro
       
@@ -213,17 +238,11 @@ if __name__ == '__main__':
 
       start_time = time.time()
 
-
-      #modelagemacustica(regTTM) # Call main function
-
-      #removeondadireta(parametro.Nt,parametro.Nx,parametro.shot)
-      #Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma_sem_onda_direta/Marmousi_sismograma001.bin")
-      #plotseism(Sismograma,parametro.T,parametro.Nx)
+      #modelagem_acustica(regTTM) 
       
-      migracao(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,parametro.nat,parametro.zr,parametro.shot)
-     
-      Imagem  =  readbinaryfile(parametro.Nz,parametro.Nx,"../Imagem/Imagem_Marmousi_shot001.bin")     
-      plotmodel(Imagem)
+      #remove_onda_direta()
+      
+      migracao_rtm()
 
       elapsed_time_python = time.time() - start_time
       print ("Tempo de processamento python = ", elapsed_time_python, "s")

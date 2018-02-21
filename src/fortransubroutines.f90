@@ -96,7 +96,7 @@ caminho_modelo = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
      if ( (mod(k,aux)==0)  .and. shotshow >0 .and. shotshow == shot) then 
         ! print *, "k=",k , "time=", (k-1)*dt
 
-        CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi",P(1:Nz,NpCA+1:NpCA+Nx))
+        CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi","../snapshot/",P(1:Nz,NpCA+1:NpCA+Nx))
      end if
      
      if (regTTM == 1) then 
@@ -121,17 +121,17 @@ END SUBROUTINE nucleomodelagem
 !************************* Migracao ************************************************
 !***********************************************************************************  
 
-SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot)
+SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap)
 
   IMPLICIT NONE  
 
-  INTEGER                        :: k
+  INTEGER                        :: k,aux
   INTEGER                        :: Nzz,Nxx                     !Expanded dimensions
   CHARACTER(len=256)             :: caminho_modelo
 
-  !INTEGER,INTENT(in)             :: Nsnap
-  !INTEGER                        :: count_snap
-  INTEGER,INTENT(in)             :: shot!,shotshow               ! Related source
+  INTEGER,INTENT(in)             :: Nsnap
+  INTEGER                        :: count_snap
+  INTEGER,INTENT(in)             :: shot,shotshow               ! Related source
   INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
 
   REAL,DIMENSION(NpCA)           :: func_Am 
@@ -170,6 +170,12 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot)
   P    = 0.0                   !Pressure field
   Pf   = 0.0                   !Pressure field in future  
   Imagem = 0.0
+  count_snap = 0
+
+
+  aux = Nsnap
+  aux = Nt/aux              ! evaluate number of snapshots
+
 
   do k = Nt,1,-1
 
@@ -185,6 +191,15 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot)
        
        CALL ImagingConditionMaxAmP(k,Nz,Nx,P(1:Nz,NpCA+1:NpCA+Nx),TTM,Imagem)
        
+       
+     if ( (mod(k,aux)==0)  .and. shotshow > 0 .and. shotshow == shot) then 
+        ! print *, "k=",k , "time=", (k-1)*dt
+
+        CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi","../snapshot_migracao_rtm/",P(1:Nz,NpCA+1:NpCA+Nx))
+
+     end if
+
+
   end do
   
        CALL writematrix(Nz,Nx,shot,Imagem,"Imagem_Marmousi","../Imagem/")
@@ -599,11 +614,11 @@ END SUBROUTINE LoadSeismogram
 !**************************** SNAPSHOT *********************************************
 !***********************************************************************************
 
-SUBROUTINE snap(Nz,Nx,count_snap,shot,outfile,Field)
+SUBROUTINE snap(Nz,Nx,count_snap,shot,outfile,folder,Field)
   IMPLICIT NONE
   CHARACTER(len=3)                               :: num_shot,num_snap  !write differents files
 
-  CHARACTER(LEN=*),INTENT(in)                    :: outfile            !output filename pattern
+  CHARACTER(LEN=*),INTENT(in)                    :: outfile,folder            !output filename pattern
   INTEGER,INTENT(inout)                          :: count_snap
   INTEGER,INTENT(in)                             :: Nx,Nz,shot
   REAL, DIMENSION(Nz,Nx),INTENT(in)              :: Field
@@ -614,7 +629,7 @@ SUBROUTINE snap(Nz,Nx,count_snap,shot,outfile,Field)
   write(num_snap,"(i3.3)")count_snap   !change in string
 
 
-  OPEN(10, FILE='../snapshot/'//trim(outfile)//'_shot'//num_shot//'snap'//num_snap //'.bin', STATUS='unknown',&
+  OPEN(10, FILE=trim(folder)//trim(outfile)//'_shot'//num_shot//'snap'//num_snap //'.bin', STATUS='unknown',&
        &FORM='unformatted',ACCESS='direct', RECL=(Nz*Nx*4))
 
   write(10,rec=1) Field !write Pressure matrix    
