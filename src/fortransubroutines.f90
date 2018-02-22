@@ -123,6 +123,7 @@ END SUBROUTINE nucleomodelagem
 
 SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap)
 
+
   IMPLICIT NONE  
 
   INTEGER                        :: k,aux
@@ -131,6 +132,7 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap)
 
   INTEGER,INTENT(in)             :: Nsnap
   INTEGER                        :: count_snap
+
   INTEGER,INTENT(in)             :: shot,shotshow               ! Related source
   INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
 

@@ -73,6 +73,7 @@ def plotmodel(matrix,colormap):
 
       figure()
       imshow(matrix,cmap= colormap)
+
       colorbar()
       draw() # drawing figure to be plotted later
       
@@ -126,7 +127,9 @@ def amort(fat_amort,n_grid):
         return w
         
 def modelagem_acustica(regTTM):      
-      '''
+
+
+     '''
       Main program is here      
       '''
       from numpy import loadtxt,size
@@ -134,7 +137,7 @@ def modelagem_acustica(regTTM):
       from fortransubroutines import wavelet
       from fortransubroutines import nucleomodelagem
       
-      
+  
       # Modelo de Velocidade Usado
 
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
@@ -168,7 +171,6 @@ def modelagem_acustica(regTTM):
       Fx = int(parametro.Nx/2)               # Posicao da Fonte (x)
       Fz = 5  #int(parametro.Nz/2) #10       # Posicao da Fonte (z)
 
-
       nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
                       parametro.h,parametro.dt,parametro.nat,\
                       parametro.shot,parametro.shotshow,\
@@ -179,6 +181,7 @@ def modelagem_acustica(regTTM):
       # Esse problema esta na linha 5 do codigo em fortran
 
       #Problema Resolvido: Olhar o codigo em fortran: da linha 10 a linha 14!
+
 
       if regTTM == 0:
             Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma/Marmousi_sismograma001.bin")
@@ -222,7 +225,6 @@ def migracao_rtm():
       if parametro.shotshow  > 0:
             plotsnaps(parametro.Nz,parametro.Nx) 
 
-
 if __name__ == '__main__':
     
       """
@@ -243,6 +245,7 @@ if __name__ == '__main__':
       #remove_onda_direta()
       
       migracao_rtm()
+
 
       elapsed_time_python = time.time() - start_time
       print ("Tempo de processamento python = ", elapsed_time_python, "s")
