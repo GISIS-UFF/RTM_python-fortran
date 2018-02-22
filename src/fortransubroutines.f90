@@ -96,7 +96,7 @@ caminho_modelo = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
      if ( (mod(k,aux)==0)  .and. shotshow >0 .and. shotshow == shot) then 
         ! print *, "k=",k , "time=", (k-1)*dt
 
-        CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi",P(1:Nz,NpCA+1:NpCA+Nx))
+        CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi","../snapshot/",P(1:Nz,NpCA+1:NpCA+Nx))
      end if
      
      if (regTTM == 1) then 
@@ -121,7 +121,8 @@ END SUBROUTINE nucleomodelagem
 !************************* Migracao ************************************************
 !***********************************************************************************  
 
-SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr)
+SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap)
+
 
   IMPLICIT NONE  
 
@@ -131,18 +132,18 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr)
 
   INTEGER,INTENT(in)             :: Nsnap
   INTEGER                        :: count_snap
-  INTEGER,INTENT(in)             :: shot,shotshow,NSx,NSz,Nfonte     ! Related source
+
+  INTEGER,INTENT(in)             :: shot,shotshow               ! Related source
   INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
 
-  INTEGER,INTENT(in)             :: regTTM                         ! Condition Transit Time Matrix
+  REAL,DIMENSION(NpCA)           :: func_Am 
+  INTEGER,INTENT(in)             :: zr                         ! Condition Transit Time Matrix
 
 
-  REAL,INTENT(in)                :: dh,dt                            
-  REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
-  REAL,DIMENSION(NpCA)           :: func_Am                           
-  REAL,DIMENSION(Nt,Nx)          :: Seism                             
-  REAL,DIMENSION(Nz,Nx)          :: TTM, ATTM                        !Related Transit Time Matrix
-  REAL,ALLOCATABLE,DIMENSION(:,:):: P,Pf,vel                          
+  REAL,INTENT(in)                 :: dh,dt                                                         
+  REAL,DIMENSION(Nt,Nx)           :: Seism                             
+  REAL,DIMENSION(Nz,Nx)           :: TTM                        !Related Transit Time Matrix
+  REAL,ALLOCATABLE,DIMENSION(:,:) :: P,Pf,vel,Imagem                        
 
   Nxx = NpCA + Nx + NpCA
   Nzz = Nz + NpCA
@@ -150,6 +151,7 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr)
   ALLOCATE(P(Nzz,Nxx))
   ALLOCATE(Pf(Nzz,Nxx))
   ALLOCATE(vel(Nzz,Nxx))
+  ALLOCATE(Imagem (Nz,Nx))
 
   ! Load Damping Function
   open(20,file='f_amort.dat',&
@@ -160,32 +162,51 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr)
 
   caminho_modelo = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
 
-  CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,trim(caminho_modelo),vel)
+! Abrindo o Modelo Suavizado, Sismograma sem a onda direta e a Matriz de Tempo de Transito
+
+  
+  CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,trim(caminho_modelo),vel)
+  CALL  LoadSeismogram(Nt,Nx,shot,"Marmousi","../sismograma_sem_onda_direta/",Seism)
+  CALL  LoadVelocityModel(Nz,Nx,'../matriz_tempo_transito/Marmousi_shot001.bin',TTM)
 
   P    = 0.0                   !Pressure field
   Pf   = 0.0                   !Pressure field in future  
+  Imagem = 0.0
+  count_snap = 0
 
-  CALL LoadSeismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Sismograma_sem_onda_direta)
 
-  do k = Nt,-1,1
-       P(zr,1:Nx) =  Sismograma_sem_onda_direta(k,1:Nx)
+  aux = Nsnap
+  aux = Nt/aux              ! evaluate number of snapshots
+
+
+  do k = Nt,1,-1
+
+       P(zr,1:Nx) =  Seism(k,1:Nx) + P(zr,1:Nx)
 
        CALL operador_quarta_ordem(Nzz,Nxx,dh,dt,vel,P,Pf)
 
-       CALL  Updatefield(Nzz,Nxx,P,Pf)
+       CALL Updatefield(Nzz,Nxx,P,Pf)
 
        CALL CerjanNSG(Nzz,Nxx,NpCA,func_Am,P,Pf)            
 
        CALL ReynoldsEngquistNSG(Nzz,Nxx,dh,dt,vel,P,Pf)
        
-       CALL ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
+       CALL ImagingConditionMaxAmP(k,Nz,Nx,P(1:Nz,NpCA+1:NpCA+Nx),TTM,Imagem)
        
-       CALL writematrix(Nz,Nx,shot,Matrix,"Imagem","../Imagem")
+       
+     if ( (mod(k,aux)==0)  .and. shotshow > 0 .and. shotshow == shot) then 
+        ! print *, "k=",k , "time=", (k-1)*dt
+
+        CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi","../snapshot_migracao_rtm/",P(1:Nz,NpCA+1:NpCA+Nx))
+
+     end if
+
 
   end do
+  
+       CALL writematrix(Nz,Nx,shot,Imagem,"Imagem_Marmousi","../Imagem/")
 
-
-END SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA)
+END SUBROUTINE migracao
 
 !***********************************************************************************
 !************************* 4nd ORDER OPERATOR IN SPACE******************************
@@ -595,11 +616,11 @@ END SUBROUTINE LoadSeismogram
 !**************************** SNAPSHOT *********************************************
 !***********************************************************************************
 
-SUBROUTINE snap(Nz,Nx,count_snap,shot,outfile,Field)
+SUBROUTINE snap(Nz,Nx,count_snap,shot,outfile,folder,Field)
   IMPLICIT NONE
   CHARACTER(len=3)                               :: num_shot,num_snap  !write differents files
 
-  CHARACTER(LEN=*),INTENT(in)                    :: outfile            !output filename pattern
+  CHARACTER(LEN=*),INTENT(in)                    :: outfile,folder            !output filename pattern
   INTEGER,INTENT(inout)                          :: count_snap
   INTEGER,INTENT(in)                             :: Nx,Nz,shot
   REAL, DIMENSION(Nz,Nx),INTENT(in)              :: Field
@@ -610,7 +631,7 @@ SUBROUTINE snap(Nz,Nx,count_snap,shot,outfile,Field)
   write(num_snap,"(i3.3)")count_snap   !change in string
 
 
-  OPEN(10, FILE='../snapshot/'//trim(outfile)//'_shot'//num_shot//'snap'//num_snap //'.bin', STATUS='unknown',&
+  OPEN(10, FILE=trim(folder)//trim(outfile)//'_shot'//num_shot//'snap'//num_snap //'.bin', STATUS='unknown',&
        &FORM='unformatted',ACCESS='direct', RECL=(Nz*Nx*4))
 
   write(10,rec=1) Field !write Pressure matrix    
@@ -782,6 +803,7 @@ END SUBROUTINE TransitTimeMatrix
 !***********************************************************************************
 
 SUBROUTINE ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
+
   IMPLICIT NONE
 
   INTEGER                              :: i,j
