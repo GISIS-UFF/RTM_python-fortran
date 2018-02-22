@@ -3,7 +3,7 @@
 !***********************************************************************************
 
 
-SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM)
+SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM,caminho_do_modelo)
 
 
   ! SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o 
@@ -60,15 +60,10 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
 
  ! revisar nome de entrada do modelo
 
-caminho_modelo = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
+!caminho_modelo = '../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin' ! Colocar o modelpath do modelo que sera utilizado
 
-  !  CALL  LoadVelocityModel(Nz,Nx,'../modelo_real/marmousi_vp_383x141.bin',vel)
-  !  CALL  LoadVelocityModel(Nz,Nx,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
-
- ! CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_real/marmousi_vp_383x141.bin',vel)
   CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,trim(caminho_modelo),vel)
- ! CALL  LoadVelocityModel(Nz,Nzz,Nx,Nxx,NpCA,'../modelo_homogeneo/velocitymodel_Homo_383x141.bin',vel)
-
+ 
   
   P    = 0.0                   !Pressure field
   Pf   = 0.0                   !Pressure field in future  
@@ -121,7 +116,7 @@ END SUBROUTINE nucleomodelagem
 !************************* Migracao ************************************************
 !***********************************************************************************  
 
-SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap)
+SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_do_modelo)
 
   IMPLICIT NONE  
 
@@ -158,7 +153,7 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap)
      read(20,*)func_Am(k)
   end do
 
-  caminho_modelo = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
+!  caminho_modelo = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
 
 ! Abrindo o Modelo Suavizado, Sismograma sem a onda direta e a Matriz de Tempo de Transito
 
@@ -193,12 +188,10 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap)
        
        
      if ( (mod(k,aux)==0)  .and. shotshow > 0 .and. shotshow == shot) then 
-        ! print *, "k=",k , "time=", (k-1)*dt
 
         CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi","../snapshot_migracao_rtm/",P(1:Nz,NpCA+1:NpCA+Nx))
 
      end if
-
 
   end do
   

@@ -138,8 +138,6 @@ def modelagem_acustica(regTTM):
       # Modelo de Velocidade Usado
 
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
-      #C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modelohomogeneo)
-
       plotmodel(C,'jet')    
       
       # Condicao de estabilidade e dispersao
@@ -166,13 +164,17 @@ def modelagem_acustica(regTTM):
       # Modelagem
       
       Fx = int(parametro.Nx/2)               # Posicao da Fonte (x)
-      Fz = 5  #int(parametro.Nz/2) #10       # Posicao da Fonte (z)
+      Fz = 5                                 # Posicao da Fonte (z)
 
-
+      # Colocar um "for" com os diferentes tiros!
+      # Ver se ele estara no programa em Python ou em Fortran
+      # Lembrar de zerar os campos de pressao depois de cada tiro
+      # Ver como mudar a posição da Fonte a cada tiro
+ 
       nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
                       parametro.h,parametro.dt,parametro.nat,\
                       parametro.shot,parametro.shotshow,\
-                      Fx,Fz,fonte,parametro.Nsnap,regTTM)
+                      Fx,Fz,fonte,parametro.Nsnap,regTTM,caminho_do_modelo)
       
 
       # SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o
@@ -208,18 +210,18 @@ def remove_onda_direta():
       plotseism(Sismograma,parametro.T,parametro.Nx)
   
 
-def migracao_rtm():
+def migracao_rtm(caminho_do_modelo):
 
       from matplotlib.pylab import cm
       from fortransubroutines import migracao
 
       migracao(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,parametro.nat,\
-               parametro.zr,parametro.shot,parametro.shotshow,parametro.Nsnap)
+               parametro.zr,parametro.shot,parametro.shotshow,parametro.Nsnap,caminho_do_modelo)
      
       Imagem  =  readbinaryfile(parametro.Nz,parametro.Nx,"../Imagem/Imagem_Marmousi_shot001.bin")     
       plotmodel(Imagem,cm.gray)
       
-      if parametro.shotshow  > 0:
+      if parametro.shotshow > 0:
             plotsnaps(parametro.Nz,parametro.Nx) 
 
 
@@ -238,13 +240,14 @@ if __name__ == '__main__':
 
       start_time = time.time()
 
-      #modelagem_acustica(regTTM) 
+      #modelagem_acustica(regTTM,'../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin') 
       
-      #remove_onda_direta()
+      #remove_onda_direta(../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin)
       
       migracao_rtm()
 
       elapsed_time_python = time.time() - start_time
+
       print ("Tempo de processamento python = ", elapsed_time_python, "s")
     
       show() # Showing all figures draw
