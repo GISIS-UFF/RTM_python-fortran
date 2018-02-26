@@ -73,6 +73,7 @@ def plotmodel(matrix,colormap):
 
       figure()
       imshow(matrix,cmap= colormap)
+
       colorbar()
       draw() # drawing figure to be plotted later
       
@@ -149,9 +150,7 @@ def posicao_fonte(Nz,Nx,N_shot,Fx0,Fz0,SpaFonte):
 
 
 def modelagem_acustica(regTTM,modelo_modelagem):      
-      '''
-      Main program is here      
-      '''
+     
       from numpy import loadtxt,size
       from matplotlib.pylab import cm
       from fortransubroutines import wavelet
@@ -161,6 +160,7 @@ def modelagem_acustica(regTTM,modelo_modelagem):
       # Modelo de Velocidade Usado
 
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
+
       plotmodel(C,'jet')    
       
       # Condicao de estabilidade e dispersao
@@ -177,8 +177,7 @@ def modelagem_acustica(regTTM,modelo_modelagem):
       lixo, fonte = loadtxt('wavelet_ricker.dat', unpack = True)
       Nfonte      = size(fonte)
       
-        
-      # Funcao Amortecedora
+     # Funcao Amortecedora
       
       func_amort = amort(parametro.fat,parametro.nat)
       
@@ -250,7 +249,16 @@ def migracao_rtm(modelo_migracao):
       plotmodel(Imagem,cm.gray)
       
       if parametro.shotshow > 0:
-            plotsnaps(parametro.Nz,parametro.Nx) 
+            plotsnaps(parametro.Nz,parametro.Nx)
+ 
+def remove_onda_direta():
+      
+      from fortransubroutines import removeondadireta
+
+      removeondadireta(parametro.Nt,parametro.Nx,parametro.shot)
+
+      Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma_sem_onda_direta/Marmousi_sismograma001.bin")
+      plotseism(Sismograma,parametro.T,parametro.Nx) 
 
 
 if __name__ == '__main__':

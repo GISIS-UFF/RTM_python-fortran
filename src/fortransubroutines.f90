@@ -2,7 +2,6 @@
 !************************* Modelagem ***********************************************
 !***********************************************************************************
 
-
 SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM,caminho_modelo)
 
 
@@ -116,7 +115,9 @@ END SUBROUTINE nucleomodelagem
 !************************* Migracao ************************************************
 !***********************************************************************************  
 
+
 SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
+
 
   IMPLICIT NONE  
 
