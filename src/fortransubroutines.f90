@@ -116,8 +116,8 @@ END SUBROUTINE nucleomodelagem
 !***********************************************************************************  
 
 
-SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
 
+SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
 
   IMPLICIT NONE  
 
