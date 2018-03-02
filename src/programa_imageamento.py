@@ -209,14 +209,10 @@ def modelagem_acustica(regTTM,modelo_modelagem):
 
             for shot in arange(1,parametro.N_shot+1):
                   filename_sismograma_real = "../sismograma/Marmousi_sismograma" + '%03d'%(shot) + ".bin"
-                 # filename_sismograma_camada_agua = "../sismograma_modelo_camada_de_agua/Homogeneo_sismograma" + '%03d'%(shot) + ".bin"
             
                   Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_real)
                   plotseism(Sismograma_Real,parametro.T,parametro.Nx)
-            
-                  # Sismograma_H = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_camada_agua)
-                  # plotseism(Sismograma_H,parametro.T,parametro.Nx)
-
+      
       
       if regTTM == 1:
 
@@ -233,12 +229,20 @@ def modelagem_acustica(regTTM,modelo_modelagem):
 def remove_onda_direta():
       
       from fortransubroutines import removeondadireta
+      from numpy import arange
 
-      for shot in arange(1,parametro.N_shot):
-            removeondadireta(parametro.Nt,parametro.Nx,shot + 1)
+      for shot in arange(1,parametro.N_shot):             
 
-      for shot in arange(1,parametro.Nshot + 1):      
-            filename_sismograma_sem_onda_direta = "../sismograma_sem_onda_direta/Marmousi_sismograma" + '%03d'%(shot) + ".bin"
+            removeondadireta(parametro.Nt,parametro.Nx,shot+1)
+
+      for shot in arange(1,parametro.N_shot + 1): 
+            
+            filename_sismograma_com_onda_direta = "../sismograma/Marmousi_sismograma" + '%03d'%(shot) + ".bin"
+            filename_sismograma_sem_onda_direta = "../sismograma_sem_onda_direta/Marmousi_sismograma" + '%03d'%(shot) + ".bin"           
+
+
+            Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_com_onda_direta)
+            plotseism(Sismograma_Real,parametro.T,parametro.Nx)
 
             Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_sem_onda_direta)
             plotseism(Sismograma,parametro.T,parametro.Nx)
@@ -258,14 +262,6 @@ def migracao_rtm(modelo_migracao):
       if parametro.shotshow > 0:
             plotsnaps(parametro.Nz,parametro.Nx)
  
-def remove_onda_direta():
-      
-      from fortransubroutines import removeondadireta
-
-      removeondadireta(parametro.Nt,parametro.Nx,parametro.shot)
-
-      Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma_sem_onda_direta/Marmousi_sismograma001.bin")
-      plotseism(Sismograma,parametro.T,parametro.Nx) 
 
 if __name__ == '__main__':
     
@@ -278,11 +274,11 @@ if __name__ == '__main__':
       import parametro
       
 
-      regTTM = 1
+      regTTM = 0
 
       start_time = time.time()
 
-      modelagem_acustica(regTTM,'../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin') 
+      modelagem_acustica(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin') 
       
       #remove_onda_direta()
       

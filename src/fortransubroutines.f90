@@ -28,7 +28,6 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
 
   INTEGER,INTENT(in)             :: regTTM                         ! Condition Transit Time Matrix
 
-
   REAL,INTENT(in)                :: dh,dt                            
   REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
   REAL,DIMENSION(NpCA)           :: func_Am  
@@ -58,9 +57,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   TTM = 0.0
   ATTM = 0.0 
 
- ! revisar nome de entrada do modelo
-
-!caminho_modelo = '../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin' ! Colocar o modelpath do modelo que sera utilizado
+ ! revisar nome de entrada do modelo 
 
   CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,trim(caminho_modelo),vel)
  
@@ -95,20 +92,27 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
      end if
      
      if (regTTM == 1) then 
-         CALL TransitTimeMatrix(Nz,Nx,k,P(1:Nz,NpCA+1:NpCA+Nx),TTM,ATTM,shot)
+        CALL TransitTimeMatrix(Nz,Nx,k,P(1:Nz,NpCA+1:NpCA+Nx),TTM,ATTM,shot)
      end if
 
-    end do
+  end do
 
-    if (regTTM == 0) then
-      CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
-      !CALL Seismogram(Nt,Nx,shot,"Homogeneo","../sismogramas_modelo_camada_de_agua/",Seism)
-    end if
-    
-    if (regTTM == 1) then
-     CALL writematrix(Nz,Nx,shot,TTM, "Marmousi","../matriz_tempo_transito/")
-    end if
+  if (regTTM == 0) then
 
+     if (caminho_modelo  == "marmousi_vp_383x141.bin") then
+        CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
+     end if
+
+
+     if (caminho_modelo == '../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin') then   
+        CALL Seismogram(Nt,Nx,shot,"Homogeneo","../sismograma_modelo_camada_de_agua/",Seism)
+     end if
+end if
+
+     if (regTTM == 1) then
+        CALL writematrix(Nz,Nx,shot,TTM, "Marmousi","../matriz_tempo_transito/")
+     end if
+  
 END SUBROUTINE nucleomodelagem
 
 
