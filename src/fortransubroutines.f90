@@ -21,7 +21,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   INTEGER                        :: Nzz,Nxx                     !Expanded dimensions
   CHARACTER(len=256)             :: caminho_modelo
 
-  INTEGER,INTENT(in)             :: Nsnap
+  INTEGER,INTENT(in)             :: Nsnap!,Nshot
   INTEGER                        :: count_snap
   INTEGER,INTENT(in)             :: shot,shotshow,NSx,NSz,Nfonte     ! Related source
   INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
@@ -31,7 +31,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
 
   REAL,INTENT(in)                :: dh,dt                            
   REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
-  REAL,DIMENSION(NpCA)           :: func_Am                           
+  REAL,DIMENSION(NpCA)           :: func_Am  
   REAL,DIMENSION(Nt,Nx)          :: Seism                             
   REAL,DIMENSION(Nz,Nx)          :: TTM, ATTM                        !Related Transit Time Matrix
   REAL,ALLOCATABLE,DIMENSION(:,:):: P,Pf,vel                          
@@ -49,6 +49,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   do k=1,NpCA
      read(20,*)func_Am(k)
   end do
+  close(20)
 
   aux = Nsnap
   aux = Nt/aux              ! evaluate number of snapshots

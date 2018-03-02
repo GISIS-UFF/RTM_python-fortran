@@ -125,8 +125,6 @@ def amort(fat_amort,n_grid):
 	  
 	savetxt('f_amort.dat',w, delimiter='.')
         return w
-        
-<<<<<<< HEAD
 
 def posicao_fonte(Nz,Nx,N_shot,Fx0,Fz0,SpaFonte):
 
@@ -139,11 +137,11 @@ def posicao_fonte(Nz,Nx,N_shot,Fx0,Fz0,SpaFonte):
 
 
       if (N_shot*SpaFonte + Fx0) > (Nx -1):
-            raise ValueError ("Fonte fora do modelo valido na horizontal. Modifique ou o espacamento da fonte ou a posicao inicial Fx0")
+            raise ValueError ("Fonte fora do modelo valido (horizontal). Modifique ou o espacamento da fonte ou a posicao inicial Fx0")
 
       if (N_shot*SpaFonte + Fz0) > (Nz -1):
-            raise ValueError ("Fonte fora do modelo valido na vertical. Modifique a posicao inicial Fz0")
-      
+            raise ValueError ("Fonte fora do modelo valido (vertical). Modifique a posicao inicial Fz0")
+     
       posicao[0:N_shot,0] = Fx
       posicao[0:N_shot,1] = Fz
 
@@ -153,7 +151,7 @@ def posicao_fonte(Nz,Nx,N_shot,Fx0,Fz0,SpaFonte):
 def modelagem_acustica(regTTM,modelo_modelagem):      
      
 
-      from numpy import loadtxt,size
+      from numpy import loadtxt,size,arange
       from matplotlib.pylab import cm
       from fortransubroutines import wavelet
       from fortransubroutines import nucleomodelagem
@@ -188,56 +186,62 @@ def modelagem_acustica(regTTM,modelo_modelagem):
       # Modelagem
 
       # Funcao Posicao das Fontes
+
       if parametro.gera_pos_fonte == 1: 
-            print parametro.Fz0
             posicao_fonte(parametro.Nz,parametro.Nx,parametro.N_shot,parametro.Fx0,parametro.Fz0,parametro.SpaFonte)
       
-      Fx, Fz = loadtxt('posicoes_fonte.dat',unpack = True)
+      Fx, Fz = loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
      
-      for shot in np.arange(1,parameto.N_shot):
+      for shot in arange(0,parametro.N_shot):
+            print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot
             nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
                       parametro.h,parametro.dt,parametro.nat,\
-                      shot,parametro.shotshow,\
-                      Fx,Fz,fonte,parametro.Nsnap,regTTM,modelo_modelagem)
+                      shot+1,parametro.shotshow,\
+                      Fx[shot],Fz[shot],fonte,parametro.Nsnap,regTTM,modelo_modelagem)
 
-      # # SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o
-      # # Esse problema esta na linha 5 do codigo em fortran
+      # SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o
+      # Esse problema esta na linha 5 do codigo em fortran
 
-      # #Problema Resolvido: Olhar o codigo em fortran: da linha 10 a linha 14!
+      #Problema Resolvido: Olhar o codigo em fortran: da linha 10 a linha 14!
 
 
       if regTTM == 0:
 
-            filename_sismograma_real = "../sismograma/Marmousi_sismograma" + '%03d'%(shot) + ".bin"
-            filename_sismograma_camada_agua = "../sismograma_modelo_camada_de_agua/Homogeneo_sismograma" + '%03d'%(shot) + ".bin"
+            for shot in arange(1,parametro.N_shot+1):
+                  filename_sismograma_real = "../sismograma/Marmousi_sismograma" + '%03d'%(shot) + ".bin"
+                 # filename_sismograma_camada_agua = "../sismograma_modelo_camada_de_agua/Homogeneo_sismograma" + '%03d'%(shot) + ".bin"
             
-            Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_real)
-            plotseism(Sismograma_Real,parametro.T,parametro.Nx)
-
-            Sismograma_H = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_camada_agua)
-            plotseism(Sismograma_H,parametro.T,parametro.Nx)
+                  Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_real)
+                  plotseism(Sismograma_Real,parametro.T,parametro.Nx)
+            
+                  # Sismograma_H = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_camada_agua)
+                  # plotseism(Sismograma_H,parametro.T,parametro.Nx)
 
       
       if regTTM == 1:
 
-            filename_matriz_tempo_transito = "../matriz_tempo_transito/Marmousi_" + 'shot' + '%03d'%(shot) + ".bin"
-            matriz_tempo_transito = readbinaryfile(parametro.Nz,parametro.Nx, filename_matriz_tempo_transito)
+            for shot in arange(1,parametro.N_shot+1):
+
+                  filename_matriz_tempo_transito = "../matriz_tempo_transito/Marmousi_" + 'shot' + '%03d'%(shot) + ".bin"
+                  matriz_tempo_transito = readbinaryfile(parametro.Nz,parametro.Nx, filename_matriz_tempo_transito)
       
-            plotmodel(matriz_tempo_transito,'jet')
+                  plotmodel(matriz_tempo_transito,'jet')
 
       if parametro.shotshow > 0:
             plotsnaps(parametro.Nz,parametro.Nx,parametro.N_snap)
- 
+  
 def remove_onda_direta():
       
       from fortransubroutines import removeondadireta
 
-      removeondadireta(parametro.Nt,parametro.Nx,parametro.shot)
+      for shot in arange(1,parametro.N_shot):
+            removeondadireta(parametro.Nt,parametro.Nx,shot + 1)
 
-      filename_sismograma_sem_onda_direta = "../sismograma_sem_onda_direta/Marmousi_sismograma" + '%03d'%(shot) + ".bin"
+      for shot in arange(1,parametro.Nshot + 1):      
+            filename_sismograma_sem_onda_direta = "../sismograma_sem_onda_direta/Marmousi_sismograma" + '%03d'%(shot) + ".bin"
 
-      Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_sem_onda_direta)
-      plotseism(Sismograma,parametro.T,parametro.Nx)
+            Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_sem_onda_direta)
+            plotseism(Sismograma,parametro.T,parametro.Nx)
   
 
 def migracao_rtm(modelo_migracao):
@@ -274,11 +278,11 @@ if __name__ == '__main__':
       import parametro
       
 
-      regTTM = 0
+      regTTM = 1
 
       start_time = time.time()
 
-      modelagem_acustica(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin') 
+      modelagem_acustica(regTTM,'../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin') 
       
       #remove_onda_direta()
       
