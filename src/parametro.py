@@ -4,9 +4,9 @@ Read Parameters
 """
 from numpy import zeros
 
-modeloreal = '../modelo_real/marmousi_vp_383x141.bin'
-modelosuavizado = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
-modelohomogeneo = '../modelo_homogeneo/velocitymodel_Homo_383x141.bin'
+modeloreal = '../modelos_utilizados/marmousi_vp_383x141.bin'
+modelosuavizado = '../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin'
+modelohomogeneo = '../modelo_utilizados/velocitymodel_Homo_383x141.bin'
 
 
 
@@ -17,7 +17,7 @@ dt         = 1.0e-04           # Incremento de tempo
 gera_pos_fonte = 0             # Gera ou não um arquivo automatico com as posicoes da fonte(0 nao gera, 1 gera)
 N_shot     = 2                 # Numero total de tiros
 Fx0        = 50                # Posicao inicial da fonte em X
-Fz0        = 2                # Posicao inicial da fonte em Z
+Fz0        = 2                 # Posicao inicial da fonte em Z
 SpaFonte   = 100               # Espacamento entre as posicoes da fonte
 f_corte    = 30                # Frequencia de corte
 fat	   = 1.5e-03	       # Fator de amortecimento
@@ -26,6 +26,6 @@ T   	   = 1		       # Tempo final
 Nt	   = int(T/dt)         # Numero de amostras
 beta	   = 4		       # Parametro de estabilidade
 alfa	   = 5		       # Parametro de dispersao
-shotshow   = 0                 # Tiro para snapshot (0 nao gera snapshot)
+shotshow   = 1                 # Tiro para snapshot (0 nao gera snapshot)
 Nsnap      = 21                # Numero de Snapshots 
 zr         = 2                 # Profundidade dos receptores

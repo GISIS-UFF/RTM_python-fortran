@@ -2,7 +2,7 @@
 !************************* Modelagem ***********************************************
 !***********************************************************************************
 
-SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM,caminho_modelo)
+SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM,caminho_modelo,zr)
 
 
   ! SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o 
@@ -26,7 +26,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   INTEGER,INTENT(in)             :: shot,shotshow,NSx,NSz,Nfonte     ! Related source
   INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
 
-  INTEGER,INTENT(in)             :: regTTM                         ! Condition Transit Time Matrix
+  INTEGER,INTENT(in)             :: regTTM,zr                         ! Condition Transit Time Matrix
 
   REAL,INTENT(in)                :: dh,dt                            
   REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
@@ -82,11 +82,10 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
      ! Revisar posicionamento dos receptores
 
      if (regTTM == 0) then
-       Seism(k,:) = P(10,NpCA+1:NpCA+Nx)
+       Seism(k,:) = P(zr,NpCA+1:NpCA+Nx)
      end if 
      
-     if ( (mod(k,aux)==0)  .and. shotshow >0 .and. shotshow == shot) then 
-        ! print *, "k=",k , "time=", (k-1)*dt
+     if ( (mod(k,aux)==0)  .and. shotshow >0 .and. shotshow == shot .and. regTTM == 1) then 
 
         CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi","../snapshot/",P(1:Nz,NpCA+1:NpCA+Nx))
      end if
@@ -98,17 +97,17 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   end do
 
   if (regTTM == 0) then
-
-     if (caminho_modelo  == "marmousi_vp_383x141.bin") then
+  
+     if (caminho_modelo  == "../modelos_utilizados/marmousi_vp_383x141.bin") then
         CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
      end if
-
-
+  
+  
      if (caminho_modelo == '../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin') then   
         CALL Seismogram(Nt,Nx,shot,"Homogeneo","../sismograma_modelo_camada_de_agua/",Seism)
      end if
-end if
-
+  end if
+  
      if (regTTM == 1) then
         CALL writematrix(Nz,Nx,shot,TTM, "Marmousi","../matriz_tempo_transito/")
      end if
@@ -142,7 +141,7 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
   REAL,INTENT(in)                 :: dh,dt                                                         
   REAL,DIMENSION(Nt,Nx)           :: Seism                             
   REAL,DIMENSION(Nz,Nx)           :: TTM                        !Related Transit Time Matrix
-  REAL,ALLOCATABLE,DIMENSION(:,:) :: P,Pf,vel,Imagem                        
+  REAL,ALLOCATABLE,DIMENSION(:,:) :: P,Pf,vel,Imagem                       
 
   Nxx = NpCA + Nx + NpCA
   Nzz = Nz + NpCA
@@ -158,6 +157,7 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
   do k=1,NpCA
      read(20,*)func_Am(k)
   end do
+  close(20)
 
 !  caminho_modelo = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
 
@@ -166,7 +166,7 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
   
   CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,trim(caminho_modelo),vel)
   CALL  LoadSeismogram(Nt,Nx,shot,"Marmousi","../sismograma_sem_onda_direta/",Seism)
-  CALL  LoadVelocityModel(Nz,Nx,'../matriz_tempo_transito/Marmousi_shot001.bin',TTM)
+  ! CALL  LoadVelocityModel(Nz,Nx,'../matriz_tempo_transito/Marmousi_shot001.bin',TTM)
 
   P    = 0.0                   !Pressure field
   Pf   = 0.0                   !Pressure field in future  
@@ -177,10 +177,9 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
   aux = Nsnap
   aux = Nt/aux              ! evaluate number of snapshots
 
-
   do k = Nt,1,-1
 
-       P(zr,1:Nx) =  Seism(k,1:Nx) + P(zr,1:Nx)
+       P(zr,NpCA+1:NpCA+Nx) =  Seism(k,1:Nx) + P(zr,NpCA+1:NpCA+Nx)
 
        CALL operador_quarta_ordem(Nzz,Nxx,dh,dt,vel,P,Pf)
 
@@ -200,7 +199,7 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
      end if
 
   end do
-  
+   
        CALL writematrix(Nz,Nx,shot,Imagem,"Imagem_Marmousi","../Imagem/")
 
 END SUBROUTINE migracao
