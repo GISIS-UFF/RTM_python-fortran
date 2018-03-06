@@ -240,20 +240,20 @@ def remove_onda_direta():
             print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot
             removeondadireta(parametro.Nt,parametro.Nx,shot+1)
 
-      for shot in arange(1,N_shot + 1): 
-            filename_sismograma_camada_agua = "../sismograma_modelo_camada_de_agua/"+'Homogeneo_sismograma'+'%03d'%(shot) + '.bin'
-            filename_sismograma_com_onda_direta = "../sismograma/Marmousi_sismograma" + '%03d'%(shot) + ".bin"
-            filename_sismograma_sem_onda_direta = "../sismograma_sem_onda_direta/Marmousi_sismograma" + '%03d'%(shot) + ".bin"           
+      # for shot in arange(1,N_shot + 1): 
+      #       filename_sismograma_camada_agua = "../sismograma_modelo_camada_de_agua/"+'Homogeneo_sismograma'+'%03d'%(shot) + '.bin'
+      #       filename_sismograma_com_onda_direta = "../sismograma/Marmousi_sismograma" + '%03d'%(shot) + ".bin"
+      #       filename_sismograma_sem_onda_direta = "../sismograma_sem_onda_direta/Marmousi_sismograma" + '%03d'%(shot) + ".bin"           
 
 
-            Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_com_onda_direta)
-            plotseism(Sismograma_Real,parametro.T,parametro.Nx)
+      #       Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_com_onda_direta)
+      #       plotseism(Sismograma_Real,parametro.T,parametro.Nx)
             
-            Sismograma_Camada_Agua = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_camada_agua)
-            plotseism(Sismograma_Camada_Agua,parametro.T,parametro.Nx)
+      #       Sismograma_Camada_Agua = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_camada_agua)
+      #       plotseism(Sismograma_Camada_Agua,parametro.T,parametro.Nx)
             
-            Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_sem_onda_direta)
-            plotseism(Sismograma,parametro.T,parametro.Nx)
+      #       Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_sem_onda_direta)
+      #       plotseism(Sismograma,parametro.T,parametro.Nx)
   
 
 def migracao_rtm(modelo_migracao):
@@ -295,7 +295,6 @@ if __name__ == '__main__':
       import time
       import parametro
       from numpy import arange
-      
 
       regTTM = 0
 

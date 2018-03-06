@@ -85,7 +85,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
        Seism(k,:) = P(zr,NpCA+1:NpCA+Nx)
      end if 
      
-     if ( (mod(k,aux)==0)  .and. shotshow >0 .and. shotshow == shot .and. regTTM == 1) then 
+     if ( (mod(k,aux)==0)  .and. shotshow > 0 .and. shotshow == shot .and. regTTM == 1) then 
 
         CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi","../snapshot/",P(1:Nz,NpCA+1:NpCA+Nx))
      end if
@@ -149,7 +149,7 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
   ALLOCATE(P(Nzz,Nxx))
   ALLOCATE(Pf(Nzz,Nxx))
   ALLOCATE(vel(Nzz,Nxx))
-  ALLOCATE(Imagem (Nz,Nx))
+  ALLOCATE(Imagem(Nz,Nx))
 
   ! Load Damping Function
   open(20,file='f_amort.dat',&
@@ -166,7 +166,7 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
   
   CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,trim(caminho_modelo),vel)
   CALL  LoadSeismogram(Nt,Nx,shot,"Marmousi","../sismograma_sem_onda_direta/",Seism)
-  ! CALL  LoadVelocityModel(Nz,Nx,'../matriz_tempo_transito/Marmousi_shot001.bin',TTM)
+  CALL  LoadTTM(Nz,Nx,shot,"Marmousi_shot",'../matriz_tempo_transito/',TTM)
 
   P    = 0.0                   !Pressure field
   Pf   = 0.0                   !Pressure field in future  
@@ -179,7 +179,8 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
 
   do k = Nt,1,-1
 
-       P(zr,NpCA+1:NpCA+Nx) =  Seism(k,1:Nx) + P(zr,NpCA+1:NpCA+Nx)
+      P(zr,NpCA+1:NpCA+Nx) =  Seism(k,1:Nx) + P(zr,NpCA+1:NpCA+Nx)
+     
 
        CALL operador_quarta_ordem(Nzz,Nxx,dh,dt,vel,P,Pf)
 
@@ -793,6 +794,81 @@ SUBROUTINE TransitTimeMatrix(Nz,Nx,k,P,TTM,ATTM)
   end do
   RETURN
 END SUBROUTINE TransitTimeMatrix
+
+!************************************************************************************
+!************************* LOADING TRANSIT TIME MATRIX ******************************
+!************************************************************************************
+SUBROUTINE LoadTTM(Ntime,Nxspace,Nshot,infilename,select_folder,TTM)
+  ! Load a Seismogram from a binary file
+  ! 
+  ! INPUT:  ../select_folder/outfile_SeismogramShot.bin
+  ! 
+  ! Ntime         = Total Number of Samples in Time
+  ! Nxspace       = Total Number of Grid Points in X direction
+  ! Nshot         = Shot Number
+  ! infilename   = Prefix in Seismogram filename
+  ! 
+  ! select_folder = Folder of Seismogram file
+  ! myID          = Number of identification of process (MPI Parameter)
+  ! proc_name     = Name of processor (MPI Parameter)
+  ! TTM   = Matrix (Nt,Nx) that will receive Transit Time Matrix
+  ! 
+  ! OUTPUT: None
+  ! 
+  ! Code Written by Felipe Timoteo
+  !                 Last update: May 23th, 2016
+  !
+  ! Copyright (C) 2017 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
+  !                    Departamento de Geologia e Geofísica
+  !                    Universidade Federal Fluminense
+
+
+  IMPLICIT NONE
+  CHARACTER(len=3)                               :: num_shot           !write differents files
+  INTEGER                                        :: kk,ii              !Counter   
+  LOGICAL                                        :: fileTTM           !Check if file exists
+
+  CHARACTER(LEN= *),INTENT(in)                   :: select_folder      !folder
+  CHARACTER(LEN= *),INTENT(in)                   :: infilename         !output filename pattern
+  INTEGER,INTENT(in)                             :: Nxspace,Ntime,Nshot
+
+  REAL, DIMENSION(Ntime,Nxspace),INTENT(out)     :: TTM       !Seismogram
+
+  ! print*,'...............................................'
+  ! write(*,"(A11,A10,A1,i3,A22,i3)"), 'Processor:',proc_name,'-',myID,'Loading Seismogram',Nshot
+  ! write(*,"(A14,A20,A3)"),'in the folder ',select_folder ,'...'
+  ! print*,'...............................................'
+
+  write(num_shot,"(i3.3)")Nshot ! write shot counter in string to write differentes Seismograms
+
+  INQUIRE(file=trim(select_folder)//trim(infilename)//num_shot//'.bin',&
+       exist=fileTTM) !verify if parameters file exist
+
+  if (fileTTM) then
+
+     OPEN(11, FILE=trim(select_folder)//trim(infilename)//num_shot//'.bin', STATUS='unknown',&
+          &FORM='unformatted',ACCESS='direct', RECL=(Ntime*Nxspace*4))
+     read(11,rec=1) ((TTM(kk,ii),kk=1,Ntime),ii=1,Nxspace)
+     close(11)
+
+  else
+
+
+     print*, ''
+     print*,'============================================================================='
+     print*, 'Transit Time Migration ',infilename,num_shot,'NOT FOUND. Do you have sure that this Transit Time Migration'
+     print*, ' is in the folder:', select_folder, '? Please, if you not sure'
+     print*, 'check the folder and try again.'
+     print*,'============================================================================='
+     print*, ''
+     print*, 'PRESS RETURN TO EXIT...   '
+     read(*,*)
+     stop
+
+  end if
+
+  RETURN
+END SUBROUTINE LoadTTM
 
 !***********************************************************************************
 !***************************** IMAGING CONDITION ***********************************
