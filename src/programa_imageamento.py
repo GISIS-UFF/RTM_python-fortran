@@ -193,13 +193,20 @@ def modelagem_acustica(regTTM,modelo_modelagem):
       
       Fx, Fz = loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
       N_shot = size(Fx)
-
-      for shot in arange(0,N_shot):
-            print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot
+      
+      if N_shot == 1:
+            print "Fx =", Fx, "Fz =", Fz, "shot",N_shot
             nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
-                      parametro.h,parametro.dt,parametro.nat,\
-                      shot+1,parametro.shotshow,\
-                      Fx[shot],Fz[shot],fonte,parametro.Nsnap,regTTM,modelo_modelagem,parametro.zr)
+                                  parametro.h,parametro.dt,parametro.nat,\
+                                  N_shot,parametro.shotshow,\
+                                  Fx,Fz,fonte,parametro.Nsnap,regTTM,modelo_modelagem,parametro.zr)
+      else:
+            for shot in arange(0,N_shot):
+                  print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot+1
+                  nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
+                                  parametro.h,parametro.dt,parametro.nat,\
+                                  shot+1,parametro.shotshow,\
+                                  Fx[shot],Fz[shot],fonte,parametro.Nsnap,regTTM,modelo_modelagem,parametro.zr)
 
       # SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o
       # Esse problema esta na linha 5 do codigo em fortran
@@ -235,10 +242,15 @@ def remove_onda_direta():
       from parametro import N_shot
       
       Fx, Fz = loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
-      N_shot = size(Fx) 
-      for shot in arange(0,N_shot):             
-            print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot
-            removeondadireta(parametro.Nt,parametro.Nx,shot+1)
+      N_shot = size(Fx)
+
+      if N_shot == 1:
+            print "Fx =", Fx, "Fz =", Fz, "shot",N_shot
+            removeondadireta(parametro.Nt,parametro.Nx,N_shot)
+      else:
+            for shot in arange(0,N_shot):             
+                  print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot+1
+                  removeondadireta(parametro.Nt,parametro.Nx,shot+1)
 
       # for shot in arange(1,N_shot + 1): 
       #       filename_sismograma_camada_agua = "../sismograma_modelo_camada_de_agua/"+'Homogeneo_sismograma'+'%03d'%(shot) + '.bin'
@@ -268,10 +280,16 @@ def migracao_rtm(modelo_migracao):
       Fx, Fz = loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
       N_shot = size(Fx)
 
-      for shot in arange(0,N_shot):
-            print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot
+      if N_shot == 1:
+            print "Fx =", Fx, "Fz =", Fz, "shot",N_shot
             migracao(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,parametro.nat,\
-               parametro.zr,shot+1,parametro.shotshow,parametro.Nsnap,modelo_migracao)
+                           parametro.zr,N_shot,parametro.shotshow,parametro.Nsnap,modelo_migracao)
+      
+      else:      
+            for shot in arange(0,N_shot):
+                  print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot+1
+                  migracao(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,parametro.nat,\
+                           parametro.zr,shot+1,parametro.shotshow,parametro.Nsnap,modelo_migracao)
       
       for shot in arange(1,N_shot+1):
             filename_imagem = "../Imagem/Imagem_Marmousi_shot" + '%03d'%(shot) + ".bin"
@@ -302,17 +320,11 @@ if __name__ == '__main__':
       start_time = time.time()
       
       print "Modelagem_Sismogramas_Modelo_Real"
-     # modelagem_acustica(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin')
-      p = mp.Process(target=modelagem_acustica, args=(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin',))
-      p.start()
-      p.join()
-
+      modelagem_acustica(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin')
+     
       print "Modelagem_Sismogramas_Camada_de_Agua"
-      #modelagem_acustica(regTTM,'../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin') 
-      m = mp.Process(target=modelagem_acustica, args=(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin',))
-      m.start()
-      m.join()
-
+      modelagem_acustica(regTTM,'../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin') 
+     
       regTTM =1
 
       print "Modelagem_Matriz_de_Tempo_de_Transito"
@@ -324,11 +336,11 @@ if __name__ == '__main__':
       print "Migracao"
       migracao_rtm('../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin')
 
-      if parametro.shotshow > 0:
+      # if parametro.shotshow > 0:
              
-            plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot/Marmousi_")
+      #       plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot/Marmousi_")
  
-            plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot_migracao_rtm/Marmousi_")
+      #       plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot_migracao_rtm/Marmousi_")
 
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
       plotmodel(C,'jet') 
