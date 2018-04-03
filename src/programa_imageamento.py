@@ -88,7 +88,7 @@ def plotseism(Sismograma,Nt,Nx):
       draw()
 
 
-def plotsnaps(dim1,dim2):
+def plotsnaps(dim1,dim2,Nsnap,snap_path):
 
       from numpy import arange, fromfile, reshape, float32
       from matplotlib.pylab import figure, imshow, draw, cm, show
@@ -98,8 +98,8 @@ def plotsnaps(dim1,dim2):
       shot = 1
       movie = []
 
-      for snap in arange(1,21):
-            inputfilename="../snapshot/Marmousi_" + "shot" + '%03d'%(shot) + "snap" + '%03d'%(snap) + ".bin"
+      for snap in arange(1,Nsnap):
+            inputfilename= snap_path + "shot" + '%03d'%(shot) + "snap" + '%03d'%(snap) + ".bin"
             data   = fromfile(inputfilename, dtype=float32, count= dim1*dim2)
             base   = reshape(data, [dim1,dim2], order='F')
             snapshot=imshow(base, cmap = cm.gray, animated=True)
@@ -112,7 +112,7 @@ def plotsnaps(dim1,dim2):
 def amort(fat_amort,n_grid):
 
 	"""
-	amort - Cria a funcao de amortecimento que vai ser usada nas bordas do modelo e a salva em umarquivo de texto
+	amort - Cria a funcao de amortecimento que vai ser usada nas bordas do modelo e a salva em um arquivo de texto
 	
 	"""
 	from numpy import zeros, arange, exp, savetxt
@@ -125,25 +125,44 @@ def amort(fat_amort,n_grid):
 	  
 	savetxt('f_amort.dat',w, delimiter='.')
         return w
-        
-def modelagem_acustica(regTTM):      
+
+def posicao_fonte(Nz,Nx,N_shot,Fx0,Fz0,SpaFonte):
+
+      from numpy import zeros,arange,savetxt
+
+      posicao = zeros((N_shot,2))
+
+      Fz = arange(0,N_shot)*0 + Fz0
+      Fx = arange(0,N_shot)*SpaFonte + Fx0
 
 
-     '''
-      Main program is here      
-      '''
-      from numpy import loadtxt,size
+      if (N_shot*SpaFonte + Fx0) > (Nx -1):
+            raise ValueError ("Fonte fora do modelo valido (horizontal). Modifique ou o espacamento da fonte ou a posicao inicial Fx0")
+
+      # if (N_shot*SpaFonte + Fz0) > (Nz -1):
+      #       raise ValueError ("Fonte fora do modelo valido (vertical). Modifique a posicao inicial Fz0")
+     
+      posicao[0:N_shot,0] = Fx
+      posicao[0:N_shot,1] = Fz
+
+      savetxt("posicoes_fonte.dat",posicao,fmt = '%i')
+
+
+def modelagem_acustica(regTTM,modelo_modelagem):      
+     
+
+      from numpy import loadtxt,size,arange
       from matplotlib.pylab import cm
       from fortransubroutines import wavelet
       from fortransubroutines import nucleomodelagem
+      from parametro import N_shot
       
   
       # Modelo de Velocidade Usado
 
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
-      #C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modelohomogeneo)
 
-      plotmodel(C,'jet')    
+      #plotmodel(C,'jet')    
       
       # Condicao de estabilidade e dispersao
       
@@ -154,28 +173,33 @@ def modelagem_acustica(regTTM):
       
       wavelet(1,parametro.dt,1,parametro.f_corte) 
       
-      plotgraphics(2,'wavelet_ricker.dat', 'k')
+      #plotgraphics(2,'wavelet_ricker.dat', 'k')
       
       lixo, fonte = loadtxt('wavelet_ricker.dat', unpack = True)
       Nfonte      = size(fonte)
       
-
-      # Funcao Amortecedora
+     # Funcao Amortecedora
       
       func_amort = amort(parametro.fat,parametro.nat)
       
-      plotgraphics(1,'f_amort.dat', 'b')
+      #plotgraphics(1,'f_amort.dat', 'b')
             
       # Modelagem
-      
-      Fx = int(parametro.Nx/2)               # Posicao da Fonte (x)
-      Fz = 5  #int(parametro.Nz/2) #10       # Posicao da Fonte (z)
 
-      nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
-                      parametro.h,parametro.dt,parametro.nat,\
-                      parametro.shot,parametro.shotshow,\
-                      Fx,Fz,fonte,parametro.Nsnap,regTTM)
+      # Funcao Posicao das Fontes
+
+      if parametro.gera_pos_fonte == 1: 
+            posicao_fonte(parametro.Nz,parametro.Nx,parametro.N_shot,parametro.Fx0,parametro.Fz0,parametro.SpaFonte)
       
+      Fx, Fz = loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
+      N_shot = size(Fx)
+
+      for shot in arange(0,N_shot):
+            print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot
+            nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
+                      parametro.h,parametro.dt,parametro.nat,\
+                      shot+1,parametro.shotshow,\
+                      Fx[shot],Fz[shot],fonte,parametro.Nsnap,regTTM,modelo_modelagem,parametro.zr)
 
       # SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o
       # Esse problema esta na linha 5 do codigo em fortran
@@ -183,47 +207,83 @@ def modelagem_acustica(regTTM):
       #Problema Resolvido: Olhar o codigo em fortran: da linha 10 a linha 14!
 
 
-      if regTTM == 0:
-            Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma/Marmousi_sismograma001.bin")
+      # if regTTM == 0:
 
-            plotseism(Sismograma_Real,parametro.T,parametro.Nx)
-
-            Sismograma_H = readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma_modelo_camada_de_agua/Homogeneo_sismograma001.bin")
+      #       for shot in arange(1,N_shot+1):
+      #             filename_sismograma_real = "../sismograma/Marmousi_sismograma" + '%03d'%(shot) + ".bin"
+            
+      #             Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_real)
+      #             plotseism(Sismograma_Real,parametro.T,parametro.Nx)
       
-            plotseism(Sismograma_H,parametro.T,parametro.Nx)
-
       
-      if regTTM == 1:
-            matriz_tempo_transito = readbinaryfile(parametro.Nz,parametro.Nx,"../matriz_tempo_transito/Marmousi_shot001.bin")
-      
-            plotmodel(matriz_tempo_transito,'jet')
+      # if regTTM == 1:
 
-      if parametro.shotshow > 0:
-            plotsnaps(parametro.Nz,parametro.Nx)
- 
+      #       for shot in arange(1,N_shot+1):
+
+      #             filename_matriz_tempo_transito = "../matriz_tempo_transito/Marmousi_" + 'shot' + '%03d'%(shot) + ".bin"
+      #             matriz_tempo_transito = readbinaryfile(parametro.Nz,parametro.Nx, filename_matriz_tempo_transito)
+      
+      #             plotmodel(matriz_tempo_transito,'jet')
+
+      # if parametro.shotshow > 0:
+      #       plotsnaps(parametro.Nz,parametro.Nx,parametro.N_snap)
+  
 def remove_onda_direta():
       
       from fortransubroutines import removeondadireta
+      from numpy import arange,loadtxt,size
+      from parametro import N_shot
+      
+      Fx, Fz = loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
+      N_shot = size(Fx) 
+      for shot in arange(0,N_shot):             
+            print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot
+            removeondadireta(parametro.Nt,parametro.Nx,shot+1)
 
-      removeondadireta(parametro.Nt,parametro.Nx,parametro.shot)
+      # for shot in arange(1,N_shot + 1): 
+      #       filename_sismograma_camada_agua = "../sismograma_modelo_camada_de_agua/"+'Homogeneo_sismograma'+'%03d'%(shot) + '.bin'
+      #       filename_sismograma_com_onda_direta = "../sismograma/Marmousi_sismograma" + '%03d'%(shot) + ".bin"
+      #       filename_sismograma_sem_onda_direta = "../sismograma_sem_onda_direta/Marmousi_sismograma" + '%03d'%(shot) + ".bin"           
 
-      Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,"../sismograma_sem_onda_direta/Marmousi_sismograma001.bin")
-      plotseism(Sismograma,parametro.T,parametro.Nx)
+
+            # Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_com_onda_direta)
+            # plotseism(Sismograma_Real,parametro.T,parametro.Nx)
+            
+            # Sismograma_Camada_Agua = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_camada_agua)
+            # plotseism(Sismograma_Camada_Agua,parametro.T,parametro.Nx)
+            
+            # Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_sem_onda_direta)
+            # plotseism(Sismograma,parametro.T,parametro.Nx)
   
 
-def migracao_rtm():
+def migracao_rtm(modelo_migracao):
 
       from matplotlib.pylab import cm
       from fortransubroutines import migracao
+      from numpy import arange, loadtxt,size,zeros
+      from parametro import N_shot
 
-      migracao(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,parametro.nat,\
-               parametro.zr,parametro.shot,parametro.shotshow,parametro.Nsnap)
-     
-      Imagem  =  readbinaryfile(parametro.Nz,parametro.Nx,"../Imagem/Imagem_Marmousi_shot001.bin")     
-      plotmodel(Imagem,cm.gray)
+      StackImage = zeros((parametro.Nz,parametro.Nx))
+
+      Fx, Fz = loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
+      N_shot = size(Fx)
+
+      for shot in arange(0,N_shot):
+            print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot
+            migracao(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,parametro.nat,\
+               parametro.zr,shot+1,parametro.shotshow,parametro.Nsnap,modelo_migracao)
       
-      if parametro.shotshow  > 0:
-            plotsnaps(parametro.Nz,parametro.Nx) 
+      for shot in arange(1,N_shot+1):
+            filename_imagem = "../Imagem/Imagem_Marmousi_shot" + '%03d'%(shot) + ".bin"
+            Imagem  =  readbinaryfile(parametro.Nz,parametro.Nx,filename_imagem)     
+            StackImage = Imagem + StackImage
+            plotmodel(Imagem,cm.gray)
+      
+      plotmodel(StackImage,cm.gray)
+
+      # if parametro.shotshow > 0:
+      #       plotsnaps(parametro.Nz,parametro.Nx )
+ 
 
 if __name__ == '__main__':
     
@@ -234,21 +294,47 @@ if __name__ == '__main__':
       from matplotlib.pylab import show
       import time
       import parametro
-      
+      from numpy import arange
+      import multiprocessing as mp
 
-      regTTM = 1
+      regTTM = 0
 
       start_time = time.time()
-
-      #modelagem_acustica(regTTM) 
       
-      #remove_onda_direta()
-      
-      migracao_rtm()
+      print "Modelagem_Sismogramas_Modelo_Real"
+     # modelagem_acustica(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin')
+      p = mp.Process(target=modelagem_acustica, args=(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin',))
+      p.start()
+      p.join()
 
+      print "Modelagem_Sismogramas_Camada_de_Agua"
+      #modelagem_acustica(regTTM,'../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin') 
+      m = mp.Process(target=modelagem_acustica, args=(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin',))
+      m.start()
+      m.join()
+
+      regTTM =1
+
+      print "Modelagem_Matriz_de_Tempo_de_Transito"
+      modelagem_acustica(regTTM,'../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin')
+
+      print "Removendo Onda Direta"
+      remove_onda_direta()
+
+      print "Migracao"
+      migracao_rtm('../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin')
+
+      if parametro.shotshow > 0:
+             
+            plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot/Marmousi_")
+ 
+            plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot_migracao_rtm/Marmousi_")
+
+      C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
+      plotmodel(C,'jet') 
 
       elapsed_time_python = time.time() - start_time
+
       print ("Tempo de processamento python = ", elapsed_time_python, "s")
     
       show() # Showing all figures draw
-
