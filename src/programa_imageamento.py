@@ -242,6 +242,7 @@ def remove_onda_direta():
       from parametro import N_shot
       
       Fx, Fz = loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
+      
       N_shot = size(Fx)
 
       if N_shot == 1:
@@ -251,6 +252,7 @@ def remove_onda_direta():
             for shot in arange(0,N_shot):             
                   print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot+1
                   removeondadireta(parametro.Nt,parametro.Nx,shot+1)
+
 
       # for shot in arange(1,N_shot + 1): 
       #       filename_sismograma_camada_agua = "../sismograma_modelo_camada_de_agua/"+'Homogeneo_sismograma'+'%03d'%(shot) + '.bin'
@@ -341,6 +343,7 @@ if __name__ == '__main__':
       #       plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot/Marmousi_")
  
       #       plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot_migracao_rtm/Marmousi_")
+
 
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
       plotmodel(C,'jet') 
