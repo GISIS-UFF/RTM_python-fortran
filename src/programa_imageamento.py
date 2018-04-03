@@ -139,8 +139,8 @@ def posicao_fonte(Nz,Nx,N_shot,Fx0,Fz0,SpaFonte):
       if (N_shot*SpaFonte + Fx0) > (Nx -1):
             raise ValueError ("Fonte fora do modelo valido (horizontal). Modifique ou o espacamento da fonte ou a posicao inicial Fx0")
 
-      if (N_shot*SpaFonte + Fz0) > (Nz -1):
-            raise ValueError ("Fonte fora do modelo valido (vertical). Modifique a posicao inicial Fz0")
+      # if (N_shot*SpaFonte + Fz0) > (Nz -1):
+      #       raise ValueError ("Fonte fora do modelo valido (vertical). Modifique a posicao inicial Fz0")
      
       posicao[0:N_shot,0] = Fx
       posicao[0:N_shot,1] = Fz
@@ -246,14 +246,14 @@ def remove_onda_direta():
       #       filename_sismograma_sem_onda_direta = "../sismograma_sem_onda_direta/Marmousi_sismograma" + '%03d'%(shot) + ".bin"           
 
 
-      #       Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_com_onda_direta)
-      #       plotseism(Sismograma_Real,parametro.T,parametro.Nx)
+            # Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_com_onda_direta)
+            # plotseism(Sismograma_Real,parametro.T,parametro.Nx)
             
-      #       Sismograma_Camada_Agua = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_camada_agua)
-      #       plotseism(Sismograma_Camada_Agua,parametro.T,parametro.Nx)
+            # Sismograma_Camada_Agua = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_camada_agua)
+            # plotseism(Sismograma_Camada_Agua,parametro.T,parametro.Nx)
             
-      #       Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_sem_onda_direta)
-      #       plotseism(Sismograma,parametro.T,parametro.Nx)
+            # Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_sem_onda_direta)
+            # plotseism(Sismograma,parametro.T,parametro.Nx)
   
 
 def migracao_rtm(modelo_migracao):
@@ -295,16 +295,23 @@ if __name__ == '__main__':
       import time
       import parametro
       from numpy import arange
+      import multiprocessing as mp
 
       regTTM = 0
 
       start_time = time.time()
       
       print "Modelagem_Sismogramas_Modelo_Real"
-      modelagem_acustica(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin')
+     # modelagem_acustica(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin')
+      p = mp.Process(target=modelagem_acustica, args=(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin',))
+      p.start()
+      p.join()
 
       print "Modelagem_Sismogramas_Camada_de_Agua"
-      modelagem_acustica(regTTM,'../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin') 
+      #modelagem_acustica(regTTM,'../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin') 
+      m = mp.Process(target=modelagem_acustica, args=(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin',))
+      m.start()
+      m.join()
 
       regTTM =1
 
@@ -322,6 +329,9 @@ if __name__ == '__main__':
             plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot/Marmousi_")
  
             plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot_migracao_rtm/Marmousi_")
+
+      C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
+      plotmodel(C,'jet') 
 
       elapsed_time_python = time.time() - start_time
 

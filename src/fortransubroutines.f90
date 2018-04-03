@@ -85,9 +85,10 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
        Seism(k,:) = P(zr,NpCA+1:NpCA+Nx)
      end if 
      
-     if ( (mod(k,aux)==0)  .and. shotshow > 0 .and. shotshow == shot .and. regTTM == 1) then 
+     if ((mod(k,aux)==0)  .and. shotshow > 0 .and. shotshow == shot .and. regTTM == 1) then 
 
         CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi","../snapshot/",P(1:Nz,NpCA+1:NpCA+Nx))
+        
      end if
      
      if (regTTM == 1) then 
@@ -102,8 +103,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
         CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
      end if
   
-  
-     if (caminho_modelo == '../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin') then   
+   if (caminho_modelo == '../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin') then   
         CALL Seismogram(Nt,Nx,shot,"Homogeneo","../sismograma_modelo_camada_de_agua/",Seism)
      end if
   end if
@@ -125,7 +125,7 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
 
   IMPLICIT NONE  
 
-  INTEGER                        :: k,aux
+  INTEGER                        :: k,aux,j
   INTEGER                        :: Nzz,Nxx                     !Expanded dimensions
   CHARACTER(len=256)             :: caminho_modelo
 
@@ -159,14 +159,12 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
   end do
   close(20)
 
-!  caminho_modelo = '../modelo_suavizado/Suave_v15_marmousi_vp_383x141.bin'
-
 ! Abrindo o Modelo Suavizado, Sismograma sem a onda direta e a Matriz de Tempo de Transito
 
-  
   CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,trim(caminho_modelo),vel)
   CALL  LoadSeismogram(Nt,Nx,shot,"Marmousi","../sismograma_sem_onda_direta/",Seism)
   CALL  LoadTTM(Nz,Nx,shot,"Marmousi_shot",'../matriz_tempo_transito/',TTM)
+
 
   P    = 0.0                   !Pressure field
   Pf   = 0.0                   !Pressure field in future  
@@ -178,9 +176,11 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
   aux = Nt/aux              ! evaluate number of snapshots
 
   do k = Nt,1,-1
+     do j=1,Nx
 
-      P(zr,NpCA+1:NpCA+Nx) =  Seism(k,1:Nx) + P(zr,NpCA+1:NpCA+Nx)
-     
+        P(zr,j+NpCA) =  Seism(k,j) + P(zr,j+NpCA)
+
+     end do
 
        CALL operador_quarta_ordem(Nzz,Nxx,dh,dt,vel,P,Pf)
 
@@ -192,11 +192,10 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
        
        CALL ImagingConditionMaxAmP(k,Nz,Nx,P(1:Nz,NpCA+1:NpCA+Nx),TTM,Imagem)
        
-       
-     if ( (mod(k,aux)==0)  .and. shotshow > 0 .and. shotshow == shot) then 
+      if ( (mod(k,aux)==0)  .and. shotshow > 0 .and. shotshow == shot) then 
 
-        CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi","../snapshot_migracao_rtm/",P(1:Nz,NpCA+1:NpCA+Nx))
-
+         CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi","../snapshot_migracao_rtm/",P(1:Nz,NpCA+1:NpCA+Nx))
+         
      end if
 
   end do
@@ -886,7 +885,7 @@ SUBROUTINE ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
 
 
   do i = 1,Nx
-     do j = 1,Nz
+     do j = 20,Nz
 
         if (k == TTM(j,i)) then
            Image(j,i) = P(j,i)
