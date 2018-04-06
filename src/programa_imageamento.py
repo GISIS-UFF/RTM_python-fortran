@@ -148,15 +148,15 @@ def posicao_fonte(Nz,Nx,N_shot,Fx0,Fz0,SpaFonte):
       savetxt("posicoes_fonte.dat",posicao,fmt = '%i')
 
 
-def modelagem_acustica(regTTM,modelo_modelagem):      
-     
+def modelagem_acustica(regTTM,modelo_modelagem,ID_modelo):      
+      
 
       from numpy import loadtxt,size,arange
       from matplotlib.pylab import cm
       from fortransubroutines import wavelet
       from fortransubroutines import nucleomodelagem
       from parametro import N_shot
-      
+    
   
       # Modelo de Velocidade Usado
 
@@ -199,14 +199,15 @@ def modelagem_acustica(regTTM,modelo_modelagem):
             nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
                                   parametro.h,parametro.dt,parametro.nat,\
                                   N_shot,parametro.shotshow,\
-                                  Fx,Fz,fonte,parametro.Nsnap,regTTM,modelo_modelagem,parametro.zr)
+                                  Fx,Fz,fonte,parametro.Nsnap,regTTM,modelo_modelagem,parametro.zr,ID_modelo)
       else:
             for shot in arange(0,N_shot):
                   print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot+1
                   nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
                                   parametro.h,parametro.dt,parametro.nat,\
                                   shot+1,parametro.shotshow,\
-                                  Fx[shot],Fz[shot],fonte,parametro.Nsnap,regTTM,modelo_modelagem,parametro.zr)
+                                  Fx[shot],Fz[shot],fonte,parametro.Nsnap,\
+                                  regTTM,modelo_modelagem,parametro.zr,ID_modelo)
 
       # SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o
       # Esse problema esta na linha 5 do codigo em fortran
@@ -295,7 +296,7 @@ def migracao_rtm(modelo_migracao):
             filename_imagem = "../Imagem/Imagem_Marmousi_shot" + '%03d'%(shot) + ".bin"
             Imagem  =  readbinaryfile(parametro.Nz,parametro.Nx,filename_imagem)     
             StackImage = Imagem + StackImage
-            plotmodel(Imagem,cm.gray)
+           #  plotmodel(Imagem,cm.gray) 
       
       plotmodel(StackImage,cm.gray)
 
@@ -313,34 +314,56 @@ if __name__ == '__main__':
       import time
       import parametro
       from numpy import arange
-      import multiprocessing as mp
+      import multiprocessing 
 
       regTTM = 0
 
       start_time = time.time()
       
+      ID_modelo = 1
       print "Modelagem_Sismogramas_Modelo_Real"
-      modelagem_acustica(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin')
+      #modelagem_acustica(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin',ID_modelo)
+      m1 = multiprocessing.Process(target=modelagem_acustica, args = (regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin',ID_modelo,))
      
+      ID_modelo = 2
       print "Modelagem_Sismogramas_Camada_de_Agua"
-      modelagem_acustica(regTTM,'../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin') 
-     
+      #modelagem_acustica(regTTM,'../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin',ID_modelo) 
+      m2 = multiprocessing.Process(target=modelagem_acustica, args = (regTTM,'../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin',ID_modelo,))
+ 
       regTTM =1
+      ID_modelo = 0
 
       print "Modelagem_Matriz_de_Tempo_de_Transito"
-      modelagem_acustica(regTTM,'../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin')
+      #modelagem_acustica(regTTM,'../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin',ID_modelo)
+      m3 = multiprocessing.Process(target=modelagem_acustica, args = (regTTM,'../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin',ID_modelo,))
+
+      m1.start()
+      m2.start()
+      m3.start()
+
+      m1.join()
+      m2.join()
+      m3.join()
 
       print "Removendo Onda Direta"
-      remove_onda_direta()
+      #remove_onda_direta()
+      m4 = multiprocessing.Process(target=remove_onda_direta, args = ())
 
       print "Migracao"
-      migracao_rtm('../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin')
+      #migracao_rtm('../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin')
+      m5 = multiprocessing.Process(target=migracao_rtm, args = ('../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin',))
+
+      m4.start()
+      m5.start()
+
+      m4.join()
+      m5.join()
 
       # if parametro.shotshow > 0:
              
       #       plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot/Marmousi_")
  
-      #       plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot_migracao_rtm/Marmousi_")
+           # plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot_migracao_rtm/Marmousi_")
 
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
       plotmodel(C,'jet') 
