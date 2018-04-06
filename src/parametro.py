@@ -9,7 +9,6 @@ modelosuavizado = '../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin'
 modelohomogeneo = '../modelo_utilizados/velocitymodel_Homo_383x141.bin'
 
 
-
 Nx         = 383  # 701             # Numero de pontos no Grid (x)
 Nz         = 141  #275              # Numero de pontos no Grid (z)
 h          = 10   #0.15             # Espacamento do Grid
@@ -29,3 +28,4 @@ alfa	   = 5		            # Parametro de dispersao
 shotshow   = 1                      # Tiro para snapshot (0 nao gera snapshot)
 Nsnap      = 20                     # Numero de Snapshots 
 zr         = 2                      # Profundidade dos receptores
+

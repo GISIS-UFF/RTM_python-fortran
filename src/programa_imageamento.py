@@ -156,7 +156,7 @@ def modelagem_acustica(regTTM,modelo_modelagem,ID_modelo):
       from fortransubroutines import wavelet
       from fortransubroutines import nucleomodelagem
       from parametro import N_shot
-    
+
   
       # Modelo de Velocidade Usado
 
@@ -194,12 +194,14 @@ def modelagem_acustica(regTTM,modelo_modelagem,ID_modelo):
       Fx, Fz = loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
       N_shot = size(Fx)
       
+
       if N_shot == 1:
             print "Fx =", Fx, "Fz =", Fz, "shot",N_shot
             nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
                                   parametro.h,parametro.dt,parametro.nat,\
                                   N_shot,parametro.shotshow,\
                                   Fx,Fz,fonte,parametro.Nsnap,regTTM,modelo_modelagem,parametro.zr,ID_modelo)
+
       else:
             for shot in arange(0,N_shot):
                   print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot+1
@@ -208,6 +210,7 @@ def modelagem_acustica(regTTM,modelo_modelagem,ID_modelo):
                                   shot+1,parametro.shotshow,\
                                   Fx[shot],Fz[shot],fonte,parametro.Nsnap,\
                                   regTTM,modelo_modelagem,parametro.zr,ID_modelo)
+
 
       # SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o
       # Esse problema esta na linha 5 do codigo em fortran
@@ -253,11 +256,11 @@ def remove_onda_direta():
                   print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot+1
                   removeondadireta(parametro.Nt,parametro.Nx,shot+1)
 
+
       # for shot in arange(1,N_shot + 1): 
       #       filename_sismograma_camada_agua = "../sismograma_modelo_camada_de_agua/"+'Homogeneo_sismograma'+'%03d'%(shot) + '.bin'
       #       filename_sismograma_com_onda_direta = "../sismograma/Marmousi_sismograma" + '%03d'%(shot) + ".bin"
       #       filename_sismograma_sem_onda_direta = "../sismograma_sem_onda_direta/Marmousi_sismograma" + '%03d'%(shot) + ".bin"           
-
 
             # Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_com_onda_direta)
             # plotseism(Sismograma_Real,parametro.T,parametro.Nx)
@@ -285,6 +288,7 @@ def migracao_rtm(modelo_migracao):
             print "Fx =", Fx, "Fz =", Fz, "shot",N_shot
             migracao(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,parametro.nat,\
                            parametro.zr,N_shot,parametro.shotshow,parametro.Nsnap,modelo_migracao)
+
       
       else:      
             for shot in arange(0,N_shot):
@@ -297,7 +301,6 @@ def migracao_rtm(modelo_migracao):
             Imagem  =  readbinaryfile(parametro.Nz,parametro.Nx,filename_imagem)     
             StackImage = Imagem + StackImage
            #  plotmodel(Imagem,cm.gray) 
-      
       plotmodel(StackImage,cm.gray)
 
       # if parametro.shotshow > 0:
@@ -316,10 +319,11 @@ if __name__ == '__main__':
       from numpy import arange
       import multiprocessing 
 
+
       regTTM = 0
 
       start_time = time.time()
-      
+
       ID_modelo = 1
       print "Modelagem_Sismogramas_Modelo_Real"
       #modelagem_acustica(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin',ID_modelo)
@@ -359,11 +363,12 @@ if __name__ == '__main__':
       m4.join()
       m5.join()
 
+
       # if parametro.shotshow > 0:
              
       #       plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot/Marmousi_")
- 
            # plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot_migracao_rtm/Marmousi_")
+
 
       C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
       plotmodel(C,'jet') 

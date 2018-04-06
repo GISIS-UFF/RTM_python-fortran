@@ -5,6 +5,7 @@
 SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM,caminho_modelo,zr,ID_modelo)
 
 
+
   ! SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o 
   ! Esse problema esta na linha 151 do codigo em python
 
@@ -27,6 +28,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
 
   INTEGER,INTENT(in)             :: regTTM,zr,ID_modelo                         ! Condition Transit Time Matrix
+
 
   REAL,INTENT(in)                :: dh,dt                            
   REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
@@ -96,6 +98,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
      end if
 
   end do
+<<<<<<< HEAD
 
   if (regTTM == 0) then
        if (ID_modelo == 1) then
@@ -113,6 +116,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
    ! if (caminho_modelo == '../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin') then   
    !      CALL Seismogram(Nt,Nx,shot,"Homogeneo","../sismograma_modelo_camada_de_agua/",Seism)
    !   end if
+
   end if
   
      if (regTTM == 1) then
@@ -186,6 +190,7 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
      do j=1,Nx
 
         P(zr,j+NpCA) =  Seism(k,j) + P(zr,j+NpCA)
+
 
      end do
 
