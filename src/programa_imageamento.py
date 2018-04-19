@@ -320,7 +320,7 @@ def migracao_rtm(modelo_migracao):
                   print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot+1
                   migracao(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,parametro.nat,\
                            parametro.zr,shot+1,parametro.shotshow,parametro.Nsnap,modelo_migracao)
-   
+
       for shot in arange(1,N_shot+1):
             filename_imagem = "../Imagem/Imagem_Marmousi_shot" + '%03d'%(shot) + ".bin"
             Imagem  =  readbinaryfile(parametro.Nz,parametro.Nx,filename_imagem)     
@@ -352,6 +352,7 @@ if __name__ == '__main__':
       
       ID_modelo = 1
       print "Modelagem_Sismogramas_Modelo_Real"
+
       m1 = multiprocessing.Process(target=modelagem_acustica, args = (regTTM,parametro.modeloreal,ID_modelo,))
       #modelagem_acustica(regTTM,parametro.modeloreal,ID_modelo)
      
@@ -381,6 +382,13 @@ if __name__ == '__main__':
 
       print "Migracao"
       migracao_rtm(parametro.modelosuavizado)
+
+
+      # if parametro.shotshow > 0:
+             
+      #       plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot/Marmousi_")
+ 
+      #       plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot_migracao_rtm/Marmousi_")
 
       elapsed_time_python = time.time() - start_time
 

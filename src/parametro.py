@@ -15,7 +15,7 @@ Nz         = 141  #275              # Numero de pontos no Grid (z)
 h          = 10   #0.15             # Espacamento do Grid
 dt         = 1.0e-04 #5.0e-04       # Incremento de tempo
 gera_pos_fonte = 1           	    # Gera ou não um arquivo automatico com as posicoes da fonte(0 nao gera, 1 gera)
-N_shot     = 100                     # Numero total de tiros
+N_shot     = 4                     # Numero total de tiros
 Fx0        = 5 #6                   # Posicao inicial da fonte em X
 Fz0        = 2                      # Posicao inicial da fonte em Z
 SpaFonte   = 2                      # Espacamento entre as posicoes da fonte
@@ -29,4 +29,5 @@ alfa	   = 5		            # Parametro de dispersao
 shotshow   = 0                      # Tiro para snapshot (0 nao gera snapshot)
 Nsnap      = 20                     # Numero de Snapshots 
 zr         = 2                      # Profundidade dos receptores
+
 
