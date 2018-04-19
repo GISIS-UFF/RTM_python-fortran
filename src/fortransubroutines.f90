@@ -2,7 +2,8 @@
 !************************* Modelagem ***********************************************
 !***********************************************************************************
 
-SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM,caminho_modelo,zr)
+SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM,caminho_modelo,zr,ID_modelo)
+
 
 
   ! SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o 
@@ -26,7 +27,8 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   INTEGER,INTENT(in)             :: shot,shotshow,NSx,NSz,Nfonte     ! Related source
   INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
 
-  INTEGER,INTENT(in)             :: regTTM,zr                         ! Condition Transit Time Matrix
+  INTEGER,INTENT(in)             :: regTTM,zr,ID_modelo                         ! Condition Transit Time Matrix
+
 
   REAL,INTENT(in)                :: dh,dt                            
   REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
@@ -38,6 +40,13 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   Nxx = NpCA + Nx + NpCA
   Nzz = Nz + NpCA
   
+  ! write(*,*)'Nz', Nz
+  ! write(*,*)'Nx', Nx
+  ! write(*,*)'Nt', Nt
+  ! write(*,*)'dh', dh
+  ! write(*,*)'dt', dt
+  ! write(*,*)'NpCA', NpCA
+
   ALLOCATE(P(Nzz,Nxx))
   ALLOCATE(Pf(Nzz,Nxx))
   ALLOCATE(vel(Nzz,Nxx))
@@ -98,14 +107,22 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   end do
 
   if (regTTM == 0) then
+       if (ID_modelo == 1) then
+          CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
+       end if
+
+       if (ID_modelo == 2) then
+          CALL Seismogram(Nt,Nx,shot,"Homogeneo","../sismograma_modelo_camada_de_agua/",Seism)
+        end if
+
+   !   if (caminho_modelo  == "../modelos_utilizados/marmousi_vp_383x141.bin") then !"../modelos_utilizados/modelo_v2_VR_275x701.bin
+   !      CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
+   !   end if
   
-     if (caminho_modelo  == "../modelos_utilizados/marmousi_vp_383x141.bin") then
-        CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
-     end if
-  
-   if (caminho_modelo == '../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin') then   
-        CALL Seismogram(Nt,Nx,shot,"Homogeneo","../sismograma_modelo_camada_de_agua/",Seism)
-     end if
+   ! if (caminho_modelo == '../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin') then   
+   !      CALL Seismogram(Nt,Nx,shot,"Homogeneo","../sismograma_modelo_camada_de_agua/",Seism)
+   !   end if
+
   end if
   
      if (regTTM == 1) then
@@ -179,6 +196,7 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo)
      do j=1,Nx
 
         P(zr,j+NpCA) =  Seism(k,j) + P(zr,j+NpCA)
+
 
      end do
 

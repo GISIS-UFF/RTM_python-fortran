@@ -109,6 +109,19 @@ def plotsnaps(dim1,dim2,Nsnap,snap_path):
   
       show()
 
+
+def plotimage(imagepath,N_shot):
+
+
+      from numpy import arange
+  
+      for shot in arange(1,N_shot+1):
+            filename_imagem = imagepath + '%03d'%(shot) + ".bin"
+            Imagem  =  readbinaryfile(parametro.Nz,parametro.Nx,filename_imagem)     
+            StackImage = Imagem + StackImage
+            # plotmodel(Imagem,cm.gray)
+            plotmodel(StackImage,'jet')    
+
 def amort(fat_amort,n_grid):
 
 	"""
@@ -136,8 +149,8 @@ def posicao_fonte(Nz,Nx,N_shot,Fx0,Fz0,SpaFonte):
       Fx = arange(0,N_shot)*SpaFonte + Fx0
 
 
-      if (N_shot*SpaFonte + Fx0) > (Nx -1):
-            raise ValueError ("Fonte fora do modelo valido (horizontal). Modifique ou o espacamento da fonte ou a posicao inicial Fx0")
+      # if (N_shot*SpaFonte + Fx0) > (Nx -1):
+      #       raise ValueError ("Fonte fora do modelo valido (horizontal). Modifique ou o espacamento da fonte ou a posicao inicial Fx0")
 
       # if (N_shot*SpaFonte + Fz0) > (Nz -1):
       #       raise ValueError ("Fonte fora do modelo valido (vertical). Modifique a posicao inicial Fz0")
@@ -147,16 +160,15 @@ def posicao_fonte(Nz,Nx,N_shot,Fx0,Fz0,SpaFonte):
 
       savetxt("posicoes_fonte.dat",posicao,fmt = '%i')
 
-
-def modelagem_acustica(regTTM,modelo_modelagem):      
-     
+def modelagem_acustica(regTTM,modelo_modelagem,ID_modelo):      
+      
 
       from numpy import loadtxt,size,arange
       from matplotlib.pylab import cm
       from fortransubroutines import wavelet
       from fortransubroutines import nucleomodelagem
       from parametro import N_shot
-      
+
   
       # Modelo de Velocidade Usado
 
@@ -193,20 +205,37 @@ def modelagem_acustica(regTTM,modelo_modelagem):
       
       Fx, Fz = loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
       N_shot = size(Fx)
-      
+
       if N_shot == 1:
             print "Fx =", Fx, "Fz =", Fz, "shot",N_shot
             nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
                                   parametro.h,parametro.dt,parametro.nat,\
                                   N_shot,parametro.shotshow,\
-                                  Fx,Fz,fonte,parametro.Nsnap,regTTM,modelo_modelagem,parametro.zr)
+                                  Fx,Fz,fonte,parametro.Nsnap,regTTM,modelo_modelagem,parametro.zr,ID_modelo)
+            # m1 = multiprocessing.Process(target=nucleomodelagem, args=(parametro.Nz,parametro.Nx,parametro.Nt,\
+            #                       parametro.h,parametro.dt,parametro.nat,\
+            #                       N_shot,parametro.shotshow,\
+            #                       Fx,Fz,fonte,parametro.Nsnap,regTTM,modelo_modelagem,parametro.zr,ID_modelo,))
+            # m1.start()
+            # m1.join()
       else:
             for shot in arange(0,N_shot):
                   print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot+1
+
+                  # m1 =multiprocessing.Process(target=nucleomodelagem, args = (parametro.Nz,parametro.Nx,parametro.Nt,\
+                  #                 parametro.h,parametro.dt,parametro.nat,\
+                  #                 shot+1,parametro.shotshow,\
+                  #                 Fx[shot],Fz[shot],fonte,parametro.Nsnap,\
+                  #                 regTTM,modelo_modelagem,parametro.zr,ID_modelo,))
+
                   nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
                                   parametro.h,parametro.dt,parametro.nat,\
                                   shot+1,parametro.shotshow,\
-                                  Fx[shot],Fz[shot],fonte,parametro.Nsnap,regTTM,modelo_modelagem,parametro.zr)
+                                  Fx[shot],Fz[shot],fonte,parametro.Nsnap,\
+                                  regTTM,modelo_modelagem,parametro.zr,ID_modelo)
+                  
+                  # m1.start()
+                  # m1.join()
 
       # SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o
       # Esse problema esta na linha 5 do codigo em fortran
@@ -242,7 +271,6 @@ def remove_onda_direta():
       from parametro import N_shot
       
       Fx, Fz = loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
-      
       N_shot = size(Fx)
 
       if N_shot == 1:
@@ -258,7 +286,6 @@ def remove_onda_direta():
       #       filename_sismograma_camada_agua = "../sismograma_modelo_camada_de_agua/"+'Homogeneo_sismograma'+'%03d'%(shot) + '.bin'
       #       filename_sismograma_com_onda_direta = "../sismograma/Marmousi_sismograma" + '%03d'%(shot) + ".bin"
       #       filename_sismograma_sem_onda_direta = "../sismograma_sem_onda_direta/Marmousi_sismograma" + '%03d'%(shot) + ".bin"           
-
 
             # Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_com_onda_direta)
             # plotseism(Sismograma_Real,parametro.T,parametro.Nx)
@@ -286,20 +313,21 @@ def migracao_rtm(modelo_migracao):
             print "Fx =", Fx, "Fz =", Fz, "shot",N_shot
             migracao(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,parametro.nat,\
                            parametro.zr,N_shot,parametro.shotshow,parametro.Nsnap,modelo_migracao)
+
       
       else:      
             for shot in arange(0,N_shot):
                   print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot+1
                   migracao(parametro.Nz,parametro.Nx,parametro.Nt,parametro.h,parametro.dt,parametro.nat,\
                            parametro.zr,shot+1,parametro.shotshow,parametro.Nsnap,modelo_migracao)
-      
+
       for shot in arange(1,N_shot+1):
             filename_imagem = "../Imagem/Imagem_Marmousi_shot" + '%03d'%(shot) + ".bin"
             Imagem  =  readbinaryfile(parametro.Nz,parametro.Nx,filename_imagem)     
             StackImage = Imagem + StackImage
-            plotmodel(Imagem,cm.gray)
+            #plotmodel(Imagem,cm.gray)
       
-      plotmodel(StackImage,cm.gray)
+      plotmodel(StackImage,'jet')
 
       # if parametro.shotshow > 0:
       #       plotsnaps(parametro.Nz,parametro.Nx )
@@ -315,38 +343,52 @@ if __name__ == '__main__':
       import time
       import parametro
       from numpy import arange
-      import multiprocessing as mp
+      import multiprocessing 
+
 
       regTTM = 0
 
       start_time = time.time()
       
+      ID_modelo = 1
       print "Modelagem_Sismogramas_Modelo_Real"
-      modelagem_acustica(regTTM,'../modelos_utilizados/marmousi_vp_383x141.bin')
+
+      m1 = multiprocessing.Process(target=modelagem_acustica, args = (regTTM,parametro.modeloreal,ID_modelo,))
+      #modelagem_acustica(regTTM,parametro.modeloreal,ID_modelo)
      
+      ID_modelo = 2
+
       print "Modelagem_Sismogramas_Camada_de_Agua"
-      modelagem_acustica(regTTM,'../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin') 
-     
+      #modelagem_acustica(regTTM,parametro.modelocamadadeagua,ID_modelo) 
+      m2 = multiprocessing.Process(target=modelagem_acustica, args = (regTTM,parametro.modelocamadadeagua,ID_modelo,))
+
       regTTM =1
+      ID_modelo = 0
 
-      print "Modelagem_Matriz_de_Tempo_de_Transito"
-      modelagem_acustica(regTTM,'../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin')
+      print "Modelagem_Matriz_de_Tempo_de_Transito" 
+      #modelagem_acustica(regTTM,parametro.modelosuavizado,ID_modelo)
+      m3 = multiprocessing.Process(target=modelagem_acustica, args = (regTTM,parametro.modelosuavizado,ID_modelo,))
 
+      m1.start()
+      m2.start()
+      m3.start()
+
+      m1.join()
+      m2.join()
+      m3.join()
+    
       print "Removendo Onda Direta"
       remove_onda_direta()
 
       print "Migracao"
-      migracao_rtm('../modelos_utilizados/Suave_v15_marmousi_vp_383x141.bin')
+      migracao_rtm(parametro.modelosuavizado)
+
 
       # if parametro.shotshow > 0:
              
       #       plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot/Marmousi_")
  
       #       plotsnaps(parametro.Nz,parametro.Nx,parametro.Nsnap,"../snapshot_migracao_rtm/Marmousi_")
-
-
-      C = readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
-      plotmodel(C,'jet') 
 
       elapsed_time_python = time.time() - start_time
 
