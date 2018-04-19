@@ -40,6 +40,13 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   Nxx = NpCA + Nx + NpCA
   Nzz = Nz + NpCA
   
+  ! write(*,*)'Nz', Nz
+  ! write(*,*)'Nx', Nx
+  ! write(*,*)'Nt', Nt
+  ! write(*,*)'dh', dh
+  ! write(*,*)'dt', dt
+  ! write(*,*)'NpCA', NpCA
+
   ALLOCATE(P(Nzz,Nxx))
   ALLOCATE(Pf(Nzz,Nxx))
   ALLOCATE(vel(Nzz,Nxx))
@@ -98,7 +105,6 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
      end if
 
   end do
-<<<<<<< HEAD
 
   if (regTTM == 0) then
        if (ID_modelo == 1) then
