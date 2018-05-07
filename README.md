@@ -66,7 +66,7 @@ $ python prepare_fortran_subroutines.py
 
 4º No seu terminal (ainda na pasta src) execute o script "programa_imageamento.py"
 
-OBS 4: Antes de executar este comando abra o script e verifique se você quer realizar tanto a modelagem quanto a migração. Caso o seu interesse seja apenas em um dos dois métodos, certifique-se de comentar o outro no "main" do programa antes de executá-lo.
+OBS: Antes de executar este comando abra o script e verifique se você quer realizar tanto a modelagem quanto a migração. Caso o seu interesse seja apenas em um dos dois métodos, certifique-se de comentar o outro no "main" do programa antes de executá-lo.
 
 $ python programa_imageamento.py
 
