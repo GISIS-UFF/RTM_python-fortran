@@ -40,13 +40,13 @@ $ git push -f origin master
 
 OBS0: Até o momento a migração utiliza a condição de imagem por tempo de excitação. 
 
-fonte: Cintia
+fonte: @Caicau
 
-OBS1: Antes de executar o seu programa verifique o script parametro.py e modifique os parâmetros apresentados de acordo com a sua necessidade.
+OBS1: Antes de executar o seu programa verifique o script "parametro.py" e modifique os parâmetros apresentados de acordo com a sua necessidade.
 
 OBS2: Outra pasta que talvez você queira modificar é "modelos_utilizados", lá você poderá adicionar o seu próprio arquivo com seu modelo em binário.
 
-OBS3: Lembre-se sempre que para realizar a modelagem e a migração você precisará de um modelo normal, um modelo suavizado e um modelo homogêneo(apresentando a velocidade da camada de água). Certifique-se de que você possui os três antes de começar 
+OBS3: Lembre-se sempre que para realizar a modelagem e a migração você precisará de um modelo real, um modelo suavizado e um modelo homogêneo (apresentando a velocidade da camada de água). Certifique-se de que você possui os três antes de começar 
 
 Na pasta src:
 

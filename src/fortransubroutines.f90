@@ -903,8 +903,8 @@ SUBROUTINE ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
 
 
   do i = 1,Nx
-     do j = 20,Nz
-
+     !do j = 20,Nz -> Marmousi
+     do j = 1,Nz
         if (k == TTM(j,i)) then
            Image(j,i) = P(j,i)
         end if
