@@ -13,7 +13,7 @@ def readbinaryfile(dim1,dim2,filename):
 
       with open(filename, 'rb') as f:    
             data   = fromfile(f, dtype=float32, count= dim1*dim2)
-            matrix = reshape(data, [dim1,dim2], order='F')
+            matrix = reshape(data, [dim1,dim2], order='C')
       return matrix
 
  
@@ -150,10 +150,10 @@ def posicao_fonte(Nz,Nx,N_shot,Fx0,Fz0,SpaFonte):
 
 
       # if (N_shot*SpaFonte + Fx0) > (Nx -1):
-      #       raise ValueError ("Fonte fora do modelo valido (horizontal). Modifique ou o espacamento da fonte ou a posicao inicial Fx0")
+      #    raise ValueError ("Fonte fora do modelo valido (horizontal). Modifique ou o espacamento da fonte ou a posicao inicial Fx0")
 
       # if (N_shot*SpaFonte + Fz0) > (Nz -1):
-      #       raise ValueError ("Fonte fora do modelo valido (vertical). Modifique a posicao inicial Fz0")
+      #    raise ValueError ("Fonte fora do modelo valido (vertical). Modifique a posicao inicial Fz0")
      
       posicao[0:N_shot,0] = Fx
       posicao[0:N_shot,1] = Fz
@@ -242,27 +242,6 @@ def modelagem_acustica(regTTM,modelo_modelagem,ID_modelo):
 
       #Problema Resolvido: Olhar o codigo em fortran: da linha 10 a linha 14!
 
-
-      # if regTTM == 0:
-
-      #       for shot in arange(1,N_shot+1):
-      #             filename_sismograma_real = "../sismograma/Marmousi_sismograma" + '%03d'%(shot) + ".bin"
-            
-      #             Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_real)
-      #             plotseism(Sismograma_Real,parametro.T,parametro.Nx)
-      
-      
-      # if regTTM == 1:
-
-      #       for shot in arange(1,N_shot+1):
-
-      #             filename_matriz_tempo_transito = "../matriz_tempo_transito/Marmousi_" + 'shot' + '%03d'%(shot) + ".bin"
-      #             matriz_tempo_transito = readbinaryfile(parametro.Nz,parametro.Nx, filename_matriz_tempo_transito)
-      
-      #             plotmodel(matriz_tempo_transito,'jet')
-
-      # if parametro.shotshow > 0:
-      #       plotsnaps(parametro.Nz,parametro.Nx,parametro.N_snap)
   
 def remove_onda_direta():
       
@@ -280,21 +259,6 @@ def remove_onda_direta():
             for shot in arange(0,N_shot):             
                   print "Fx =", Fx[shot], "Fz =", Fz[shot], "shot", shot+1
                   removeondadireta(parametro.Nt,parametro.Nx,shot+1)
-
-
-      # for shot in arange(1,N_shot + 1): 
-      #       filename_sismograma_camada_agua = "../sismograma_modelo_camada_de_agua/"+'Homogeneo_sismograma'+'%03d'%(shot) + '.bin'
-      #       filename_sismograma_com_onda_direta = "../sismograma/Marmousi_sismograma" + '%03d'%(shot) + ".bin"
-      #       filename_sismograma_sem_onda_direta = "../sismograma_sem_onda_direta/Marmousi_sismograma" + '%03d'%(shot) + ".bin"           
-
-            # Sismograma_Real = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_com_onda_direta)
-            # plotseism(Sismograma_Real,parametro.T,parametro.Nx)
-            
-            # Sismograma_Camada_Agua = readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_camada_agua)
-            # plotseism(Sismograma_Camada_Agua,parametro.T,parametro.Nx)
-            
-            # Sismograma =  readbinaryfile(parametro.Nt,parametro.Nx,filename_sismograma_sem_onda_direta)
-            # plotseism(Sismograma,parametro.T,parametro.Nx)
   
 
 def migracao_rtm(modelo_migracao):
@@ -354,7 +318,7 @@ if __name__ == '__main__':
       print "Modelagem_Sismogramas_Modelo_Real"
 
       m1 = multiprocessing.Process(target=modelagem_acustica, args = (regTTM,parametro.modeloreal,ID_modelo,))
-      #modelagem_acustica(regTTM,parametro.modeloreal,ID_modelo)
+     # modelagem_acustica(regTTM,parametro.modeloreal,ID_modelo)
      
       ID_modelo = 2
 
@@ -366,7 +330,7 @@ if __name__ == '__main__':
       ID_modelo = 0
 
       print "Modelagem_Matriz_de_Tempo_de_Transito" 
-      #modelagem_acustica(regTTM,parametro.modelosuavizado,ID_modelo)
+     # modelagem_acustica(regTTM,parametro.modelosuavizado,ID_modelo)
       m3 = multiprocessing.Process(target=modelagem_acustica, args = (regTTM,parametro.modelosuavizado,ID_modelo,))
 
       m1.start()
