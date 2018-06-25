@@ -68,11 +68,6 @@ def amort(fat_amort,n_grid):
 	np.savetxt('f_amort.dat',w, delimiter='.')
 
 def posicao_fonte(Nz,Nx,N_shot,Fx0,Fz0,SpaFonte):
-      """
-      Cria arquivo com N_shot posições x e z da fonte.
-
-      Atenção para posições de fontes fora do domínio válido.
-      """
       
       posicao = np.zeros((N_shot,2))
 

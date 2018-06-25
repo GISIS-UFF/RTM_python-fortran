@@ -1,20 +1,3 @@
-"""
-Esse script executa a modelagem sísmica.
-São utilizadas a equação da onda acústica e o
-operador de diferenças finitas.
-
-Com ele é possível simular uma aquisição
-sísmica 2D e registrar o sismograma.
-
-Nesse script é possível gerar os snapshot
-para controle de qualidade da modelagem,
-ou registrar a matriz tempo de trânsito, 
-utilizada na migração.
-
-São necessários o arquivo de parâmetros de 
-modelagem e o modelo de velocidade utilizado.
-"""
-
 import parametro
 import time
 import matplotlib.pyplot as pl
@@ -33,10 +16,10 @@ start_time = time.time()
 C = aux.readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
 aux.plotmodel(C,'jet')
 
-# Gera fonte sísmica
+# Gera fonte sismica
 fortran.wavelet(1,parametro.dt,1,parametro.f_corte) 
 
-# Visualiza pulso sísmico
+# Visualiza pulso sismico
 aux.plotgraphics(2,'wavelet_ricker.dat', 'k')
 #pl.show()
 
@@ -53,7 +36,7 @@ aux.plotgraphics(1,'f_amort.dat','k')
 if parametro.gera_pos_fonte: 
     aux.posicao_fonte(parametro.Nz,parametro.Nx,parametro.N_shot,parametro.Fx0,parametro.Fz0,parametro.SpaFonte)
 
-# Carrega posição da fonte
+# Carrega posicao da fonte
 Fx, Fz = np.loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
 N_shot = np.size(Fx)
 
@@ -64,7 +47,7 @@ if N_shot == 1:
                     N_shot,parametro.shotshow,\
                     Fx,Fz,fonte,parametro.Nsnap,regTTM,parametro.modeloreal,parametro.zr,ID_modelo)
             
-else: # Se números de tiros é maior que 1 use a paralelização
+else: # Se numeros de tiros e maior que 1 use a paralelizacao
     procs = []    
     for shot in np.arange(0,N_shot):
         proc = mp.Process(target=aux.modelagemparalela, args=(shot+1,Fx[shot],Fz[shot],fonte,regTTM,ID_modelo))
