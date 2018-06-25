@@ -95,6 +95,11 @@ def modelagemparalela(shot,Fx,Fz,fonte,regTTM,ID_modelo):
                               regTTM,parametro.modeloreal,parametro.zr,ID_modelo)
 
 
+def remove_onda_direta(shot):
+      print("Fx =", Fx, "Fz =", Fz, "shot", shot)
+      fortran.removeondadireta(parametro.Nt,parametro.Nx)
+
+
 def square(x,numbers):
  
     for x in numbers:
