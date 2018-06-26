@@ -2,8 +2,9 @@
 !************************* Modelagem ***********************************************
 !***********************************************************************************
 
-SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM,caminho_modelo,zr,ID_modelo)
-
+SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,&
+                          &regTTM,caminho_modelo,caminho_sismograma,nome_prin,zr)
+!SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfonte,Nsnap,regTTM,caminho_modelo,zr,ID_modelo)
 
 
   ! SOCORRO: Valores de Nsnap e Nfonte estao trocados mas funcionando mesmo assim :o 
@@ -20,17 +21,19 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
 
   INTEGER                        :: k,aux
   INTEGER                        :: Nzz,Nxx                     !Expanded dimensions
-  CHARACTER(len=256)             :: caminho_modelo
+  CHARACTER(len=256),INTENT(in)  :: caminho_modelo
+  CHARACTER(len=256),INTENT(in)  :: caminho_sismograma
+  CHARACTER(len=256),INTENT(in)  :: nome_prin
+  
 
   INTEGER,INTENT(in)             :: Nsnap!,Nshot
-  INTEGER                        :: count_snap
   INTEGER,INTENT(in)             :: shot,shotshow,NSx,NSz,Nfonte     ! Related source
   INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
-
-  INTEGER,INTENT(in)             :: regTTM,zr,ID_modelo                         ! Condition Transit Time Matrix
-
-
+  INTEGER,INTENT(in)             :: regTTM,zr                         ! Condition Transit Time Matrix
   REAL,INTENT(in)                :: dh,dt                            
+
+  INTEGER                        :: count_snap
+
   REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
   REAL,DIMENSION(NpCA)           :: func_Am  
   REAL,DIMENSION(Nt,Nx)          :: Seism                             
@@ -96,7 +99,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
      
      if ((mod(k,aux)==0)  .and. shotshow > 0 .and. shotshow == shot .and. regTTM == 1) then 
 
-        CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi","../snapshot/",P(1:Nz,NpCA+1:NpCA+Nx))
+        CALL snap(Nzz,Nxx,count_snap,shotshow,trim(nome_prin),"../snapshot/",P(1:Nz,NpCA+1:NpCA+Nx))
         
      end if
      
@@ -107,27 +110,11 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   end do
 
   if (regTTM == 0) then
-       if (ID_modelo == 1) then
-          CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
-       end if
+     CALL Seismogram(Nt,Nx,shot,trim(nome_prin),trim(caminho_sismograma),Seism)
 
-       if (ID_modelo == 2) then
-          CALL Seismogram(Nt,Nx,shot,"Homogeneo","../sismograma_modelo_camada_de_agua/",Seism)
-        end if
-
-   !   if (caminho_modelo  == "../modelos_utilizados/marmousi_vp_383x141.bin") then !"../modelos_utilizados/modelo_v2_VR_275x701.bin
-   !      CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Seism)
-   !   end if
-  
-   ! if (caminho_modelo == '../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin') then   
-   !      CALL Seismogram(Nt,Nx,shot,"Homogeneo","../sismograma_modelo_camada_de_agua/",Seism)
-   !   end if
-
+  else if (regTTM == 1) then
+     CALL writematrix(Nz,Nx,shot,TTM,trim(nome_prin),"../matriz_tempo_transito/")
   end if
-  
-     if (regTTM == 1) then
-        CALL writematrix(Nz,Nx,shot,TTM, "Marmousi","../matriz_tempo_transito/")
-     end if
   
 END SUBROUTINE nucleomodelagem
 
