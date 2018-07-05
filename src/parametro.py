@@ -8,8 +8,8 @@ modeloreal         = '../modelos_utilizados/marmousi_vp_383x141.bin'
 modelosuavizado    = '../modelos_utilizados/Suave_SigsbeeModel_500x500_fator_suavizacao_100.bin'
 #modelohomogeneo   = '../modelo_utilizados/velocitymodel_Homo_383x141.bin'
 modelocamadadeagua = '../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin'
-caminho_sismograma = '../sismograma/'
-nome_prin          = 'Marmousi' 
+caminho_sismograma = '../sismograma_modelo_camada_de_agua/'
+nome_prin          = 'Homogeneo' 
 
 Nx         = 383  # 500             # Numero de pontos no Grid (x)
 Nz         = 141  #500              # Numero de pontos no Grid (z)
