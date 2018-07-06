@@ -32,7 +32,6 @@ func_amort = aux.amort(parametro.fat,parametro.nat)
 aux.plotgraphics(1,'f_amort.dat','k')
 #pl.show()
 
-
 if parametro.gera_pos_fonte: 
     aux.posicao_fonte(parametro.Nz,parametro.Nx,parametro.N_shot,parametro.Fx0,parametro.Fz0,parametro.SpaFonte)
 
@@ -40,17 +39,22 @@ if parametro.gera_pos_fonte:
 Fx, Fz = np.loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
 N_shot = np.size(Fx)
 
+print(N_shot)
 if N_shot == 1:
     print("Fx =", Fx, "Fz =", Fz, "shot",N_shot)
     fortran.nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
-                    parametro.h,parametro.dt,parametro.nat,\
-                    N_shot,parametro.shotshow,\
-                    Fx,Fz,fonte,parametro.Nsnap,regTTM,parametro.modeloreal,parametro.zr,ID_modelo)
-            
+                                parametro.h,parametro.dt,parametro.nat,\
+                                N_shot,parametro.shotshow,\
+                                Fx,Fz,fonte,parametro.Nsnap,regTTM,\
+                                parametro.modeloreal,parametro.caminho_sismograma,\
+                                parametro.nome_prin,\
+                                parametro.zr,)
+    print(" shot= ",shot," Finalizado.")
+    
 else: # Se numeros de tiros e maior que 1 use a paralelizacao
     procs = []    
     for shot in np.arange(0,N_shot):
-        proc = mp.Process(target=aux.modelagemparalela, args=(shot+1,Fx[shot],Fz[shot],fonte,regTTM,ID_modelo))
+        proc = mp.Process(target=aux.modelagemparalela, args=(shot+1,Fx[shot],Fz[shot],fonte,regTTM,parametro.caminho_sismograma,parametro.nome_prin))
         procs.append(proc)
         proc.start()
     

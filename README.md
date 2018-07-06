@@ -1,4 +1,5 @@
-# RTM_python-fortran
+
+# RTM_python-fortran [![Waffle.io - Columns and their card count](https://badge.waffle.io/GISIS-UFF/RTM_python-fortran.svg?columns=all&style=flat-square)](https://waffle.io/GISIS-UFF/RTM_python-fortran) 
 
 Neste projeto foram abordadas duas técnicas fundamentais do processamento sísmico: A Modelagem
 Sísmica e a Migração Reversa no Tempo (Reverse Time Migration - RTM). A primeira é responsável pela simulação da propagação de ondas, permitindo assim, a inferência das propriedades do meio como a velocidade de propagação e a densidade. Aqui, ela é utilizada em modelos sintéticos para se ter um maior controle do algoritmo de migração criado. A Migração Reversa no Tempo, por sua vez, tem por objetivo, a correção de possíveis distorções que ocorrem na imagem dos recetores em sub-superfície, utilizando dados sísmicos no domínio do tempo e uma condição de imagem. 
