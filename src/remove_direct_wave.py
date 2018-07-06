@@ -43,7 +43,7 @@ if N_shot == 1:
                     parametro.h,parametro.dt,parametro.nat,\
                     N_shot,parametro.shotshow,\
                     Fx,Fz,fonte,parametro.Nsnap,regTTM,\
-                    parametro.modelocamadadeagua,parametro.sismogramaobservado,\
+                    parametro.modelocamadadeagua,parametro.sismogramacamadadeagua,\
                     parametro.nome_prin,\
                     parametro.zr,)
 
