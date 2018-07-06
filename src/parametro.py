@@ -11,7 +11,7 @@ modelocamadadeagua = '../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin'
 sismogramaobservado = '../sismograma/'
 sismogramacamadadeagua = '../sismograma_modelo_camada_de_agua/'
 sismogramasemondadireta = '../sismograma_sem_onda_direta/'
-nome_prin          = 'Marm2' 
+nome_prin          = 'Marmousi' 
 
 Nx         = 383  # 500             # Numero de pontos no Grid (x)
 Nz         = 141  #500              # Numero de pontos no Grid (z)

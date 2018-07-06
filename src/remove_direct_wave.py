@@ -8,8 +8,6 @@ import auxfunctionsmodule as aux
 import fortransubroutines as fortran
 
 regTTM = 0
-# caminho_sismograma = "../sismograma_modelo_camada_de_agua/"
-# nome_prin = "Homogeneo"
 
 start_time = time.time()
 
@@ -18,11 +16,11 @@ start_time = time.time()
 C = aux.readbinaryfile(parametro.Nz,parametro.Nx,parametro.modelocamadadeagua)
 aux.plotmodel(C,'jet')
 
-# Gera fonte sismica
-fortran.wavelet(1,parametro.dt,1,parametro.f_corte) 
+# Gera fonte sismica - não precisa, gerado com os dados observados
+#fortran.wavelet(1,parametro.dt,1,parametro.f_corte) 
 
 # Visualiza pulso sismico
-aux.plotgraphics(2,'wavelet_ricker.dat', 'k')
+#aux.plotgraphics(2,'wavelet_ricker.dat', 'k')
 #pl.show()
 
 # Define o numero de amostas da fonte
@@ -38,13 +36,14 @@ aux.plotgraphics(1,'f_amort.dat','k')
 Fx, Fz = np.loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
 N_shot = np.size(Fx)
 
+# Modelagem com modelo homogeneo - usado para remover a onda direta
 if N_shot == 1:
     print("Fx =", Fx, "Fz =", Fz, "shot",N_shot)
     fortran.nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
                     parametro.h,parametro.dt,parametro.nat,\
                     N_shot,parametro.shotshow,\
                     Fx,Fz,fonte,parametro.Nsnap,regTTM,\
-                    parametro.modelocamadadeagua,parametro.caminho_sismograma,\
+                    parametro.modelocamadadeagua,parametro.sismogramaobservado,\
                     parametro.nome_prin,\
                     parametro.zr,)
 
@@ -53,7 +52,15 @@ if N_shot == 1:
 else: # Se numeros de tiros e maior que 1 use a paralelizacao
     procs = []    
     for shot in np.arange(0,N_shot):
-        proc = mp.Process(target=aux.modelagemparalela, args=(shot+1,Fx[shot],Fz[shot],fonte,regTTM,parametro.caminho_sismograma,parametro.nome_prin))
+        proc = mp.Process(target=aux.modelagemparalela, \
+        args=(shot+1,\
+        Fx[shot],\
+        Fz[shot],\
+        fonte,\
+        regTTM,\
+        parametro.sismogramaobservado,\
+        parametro.modelocamadadeagua,\
+        parametro.nome_prin))
         procs.append(proc)
         proc.start()
     
