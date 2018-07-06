@@ -58,7 +58,7 @@ else: # Se numeros de tiros e maior que 1 use a paralelizacao
         Fz[shot],\
         fonte,\
         regTTM,\
-        parametro.sismogramaobservado,\
+        parametro.sismogramacamadadeagua,\
         parametro.modelocamadadeagua,\
         parametro.nome_prin))
         procs.append(proc)
