@@ -945,11 +945,11 @@ SUBROUTINE removeondadireta(Nt,Nx,shot)
 
 !Ler Sismograma Homogeneo
 
-  CALL LoadSeismogram(Nt,Nx,shot,"Homogeneo","../sismograma_modelo_camada_de_agua/",Sismograma_Homogeneo)
+  CALL LoadSeismogram(Nt,Nx,shot,"Homogeneo_","../sismograma_modelo_camada_de_agua/",Sismograma_Homogeneo)
 
 !Ler Sismograma Real
 
-  CALL LoadSeismogram(Nt,Nx,shot,"Marmousi","../sismograma/",Sismograma_Real)
+  CALL LoadSeismogram(Nt,Nx,shot,"Marmousi_","../sismograma/",Sismograma_Real)
 
 ! Retira a onda direta
 

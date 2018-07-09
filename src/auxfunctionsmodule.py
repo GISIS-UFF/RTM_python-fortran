@@ -86,13 +86,13 @@ def posicao_fonte(Nz,Nx,N_shot,Fx0,Fz0,SpaFonte):
 
       np.savetxt("posicoes_fonte.dat",posicao,fmt = '%i')
 
-def modelagemparalela(shot,Fx,Fz,fonte,regTTM,caminho_sismograma,nome_prin):      
+def modelagemparalela(shot,Fx,Fz,fonte,regTTM,modelo,sismograma,nome_prin):      
       print("Fx =", Fx, "Fz =", Fz, "shot", shot)
       fortran.nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
                                     parametro.h,parametro.dt,parametro.nat,\
                                     shot,parametro.shotshow,\
                                     Fx,Fz,fonte,parametro.Nsnap,regTTM,\
-                                    parametro.modeloreal,parametro.caminho_sismograma,\
+                                    modelo,sismograma,\
                                     parametro.nome_prin,\
                                     parametro.zr,)
       print(" shot= ",shot," Finalizado.")
@@ -101,7 +101,7 @@ def modelagemparalela(shot,Fx,Fz,fonte,regTTM,caminho_sismograma,nome_prin):
 
 def remove_onda_direta(shot,Fx,Fz):
       print("Fx =", Fx, "Fz =", Fz, "shot", shot)
-      fortran.removeondadireta(parametro.Nt,parametro.Nx)
+      fortran.removeondadireta(parametro.Nt,parametro.Nx,shot)
       print(" shot= ",shot," Finalizado.")
 
 def square(x,numbers):
