@@ -63,6 +63,7 @@ else: # Se numeros de tiros e maior que 1 use a paralelizacao
         parametro.sismogramaobservado,\
         parametro.modeloreal,\
         parametro.nome_prin))
+
         procs.append(proc)
         proc.start()
     

@@ -91,24 +91,25 @@ def modelagemparalela(shot,\
                       Fz,\
                       fonte,\
                       regTTM,\
-                      sismogramaobservado,\
-                      modeloreal,\
+                      sismograma,\
+                      modelo,\
                       nome_prin):      
+
       print("Fx =", Fx, "Fz =", Fz, "shot", shot)
       fortran.nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
                                     parametro.h,parametro.dt,parametro.nat,\
                                     shot,parametro.shotshow,\
                                     Fx,Fz,fonte,parametro.Nsnap,regTTM,\
-                                    modeloreal,sismogramaobservado,\
+                                    modelo,sismograma,\
                                     nome_prin,\
                                     parametro.zr,)
       print(" shot= ",shot," Finalizado.")
 
 
 
-def remove_onda_direta(shot,Fx,Fz):
+def remove_onda_direta(shot,Fx,Fz,nome_prin):
       print("Fx =", Fx, "Fz =", Fz, "shot", shot)
-      fortran.removeondadireta(parametro.Nt,parametro.Nx)
+      fortran.removeondadireta(parametro.Nt,parametro.Nx,shot,nome_prin)
       print(" shot= ",shot," Finalizado.")
 
 def square(x,numbers):
