@@ -934,30 +934,25 @@ END SUBROUTINE writematrix
 !************************ REMOVE ONDA DIRETA *************************************
 !*********************************************************************************
 
-SUBROUTINE removeondadireta(Nt,Nx,shot)
+SUBROUTINE removeondadireta(Nt,Nx,shot,nome_prin)
 
  IMPLICIT NONE
 
- INTEGER,INTENT(in)      :: Nx,Nt,shot
-
- REAL, DIMENSION(Nt,Nx)  :: Sismograma_Homogeneo,Sismograma_Real,Sismograma_sem_onda_direta !Seismogram
-
+ INTEGER,INTENT(in)             :: Nx,Nt,shot
+ CHARACTER(len=256),INTENT(in)  :: nome_prin
+ REAL, DIMENSION(Nt,Nx)         :: Sism_Hom,Sism_Obs,Sism_RTM !Seismogram
 
 !Ler Sismograma Homogeneo
-
-  CALL LoadSeismogram(Nt,Nx,shot,"Homogeneo_","../sismograma_modelo_camada_de_agua/",Sismograma_Homogeneo)
+  CALL LoadSeismogram(Nt,Nx,shot,trim(nome_prin),"../sismograma_modelo_camada_de_agua/",Sism_Hom)
 
 !Ler Sismograma Real
-
-  CALL LoadSeismogram(Nt,Nx,shot,"Marmousi_","../sismograma/",Sismograma_Real)
+  CALL LoadSeismogram(Nt,Nx,shot,trim(nome_prin),"../sismograma/",Sism_Obs)
 
 ! Retira a onda direta
-
-Sismograma_sem_onda_direta = Sismograma_Real - Sismograma_Homogeneo
+  Sism_RTM = Sism_Obs - Sism_Hom
 
 !grava sismograma sem onda direta
-
-CALL Seismogram(Nt,Nx,shot,"Marmousi","../sismograma_sem_onda_direta/",Sismograma_sem_onda_direta)
+CALL Seismogram(Nt,Nx,shot,trim(nome_prin),"../sismograma_sem_onda_direta/",Sism_RTM)
 
 END SUBROUTINE removeondadireta
  

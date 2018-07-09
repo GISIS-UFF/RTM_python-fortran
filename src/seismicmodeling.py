@@ -54,7 +54,16 @@ if N_shot == 1:
 else: # Se numeros de tiros e maior que 1 use a paralelizacao
     procs = []    
     for shot in np.arange(0,N_shot):
-        proc = mp.Process(target=aux.modelagemparalela, args=(shot+1,Fx[shot],Fz[shot],fonte,regTTM,parametro.modeloreal,parametro.sismogramaobservado,parametro.nome_prin))
+        proc = mp.Process(target=aux.modelagemparalela, \
+        args=(shot+1,\
+        Fx[shot],\
+        Fz[shot],\
+        fonte,\
+        regTTM,\
+        parametro.sismogramaobservado,\
+        parametro.modeloreal,\
+        parametro.nome_prin))
+
         procs.append(proc)
         proc.start()
     
