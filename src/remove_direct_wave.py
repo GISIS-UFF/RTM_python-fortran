@@ -36,27 +36,27 @@ aux.plotgraphics(1,'f_amort.dat','k')
 Fx, Fz = np.loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
 N_shot = np.size(Fx)
 
-# if N_shot == 1:
-#     print("Fx =", Fx, "Fz =", Fz, "shot",N_shot)
-#     fortran.nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
-#                     parametro.h,parametro.dt,parametro.nat,\
-#                     N_shot,parametro.shotshow,\
-#                     Fx,Fz,fonte,parametro.Nsnap,regTTM,\
-#                     parametro.modelocamadadeagua,parametro.sismogramacamadadeagua,\
-#                     parametro.nome_prin,\
-#                     parametro.zr,)
+if N_shot == 1:
+    print("Fx =", Fx, "Fz =", Fz, "shot",N_shot)
+    fortran.nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
+                    parametro.h,parametro.dt,parametro.nat,\
+                    N_shot,parametro.shotshow,\
+                    Fx,Fz,fonte,parametro.Nsnap,regTTM,\
+                    parametro.modelocamadadeagua,parametro.sismogramacamadadeagua,\
+                    parametro.nome_prin,\
+                    parametro.zr,)
 
-#     print("shot=",shot,"Finalizado")
+    print("shot=",shot,"Finalizado")
             
-# else: # Se numeros de tiros e maior que 1 use a paralelizacao
-#     procs = []    
-#     for shot in np.arange(0,N_shot):
-#         proc = mp.Process(target=aux.modelagemparalela, args=(shot+1,Fx[shot],Fz[shot],fonte,regTTM,parametro.modelocamadadeagua,parametro.sismogramacamadadeagua,parametro.nome_prin))
-#         procs.append(proc)
-#         proc.start()
+else: # Se numeros de tiros e maior que 1 use a paralelizacao
+    procs = []    
+    for shot in np.arange(0,N_shot):
+        proc = mp.Process(target=aux.modelagemparalela, args=(shot+1,Fx[shot],Fz[shot],fonte,regTTM,parametro.modelocamadadeagua,parametro.sismogramacamadadeagua,parametro.nome_prin))
+        procs.append(proc)
+        proc.start()
     
-#     for proc in procs:
-#         proc.join()
+    for proc in procs:
+        proc.join()
 
 # Removendo a onda direta
 
