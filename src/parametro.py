@@ -9,6 +9,8 @@ modelosuavizado    = '../modelos_utilizados/Suave_SigsbeeModel_500x500_fator_sua
 #modelohomogeneo   = '../modelo_utilizados/velocitymodel_Homo_383x141.bin'
 modelocamadadeagua = '../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin'
 caminho_sismograma = '../sismograma/'
+caminho_TTM = '../matriz_tempo_transito'
+caminho_migracao = '../Imagem'
 nome_prin          = 'Marmousi' 
 
 Nx         = 383  # 500             # Numero de pontos no Grid (x)
