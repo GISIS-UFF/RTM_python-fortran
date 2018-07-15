@@ -8,10 +8,13 @@ modeloreal         = '../modelos_utilizados/marmousi_vp_383x141.bin'
 modelosuavizado    = '../modelos_utilizados/Suave_SigsbeeModel_500x500_fator_suavizacao_100.bin'
 #modelohomogeneo   = '../modelo_utilizados/velocitymodel_Homo_383x141.bin'
 modelocamadadeagua = '../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin'
-caminho_sismograma = '../sismograma/'
+
+sismogramaobservado = '../sismograma/'
+sismogramacamadadeagua = '../sismograma_modelo_camada_de_agua/'
+sismogramasemondadireta = '../sismograma_sem_onda_direta/'
+nome_prin          = 'Homogeneo'
 caminho_TTM = '../matriz_tempo_transito'
-caminho_migracao = '../Imagem'
-nome_prin          = 'Marmousi' 
+caminho_migracao = '../Imagem' 
 
 Nx         = 383  # 500             # Numero de pontos no Grid (x)
 Nz         = 141  #500              # Numero de pontos no Grid (z)
