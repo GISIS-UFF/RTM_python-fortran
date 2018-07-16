@@ -1,14 +1,12 @@
 ## Modules that will be used in this code
 
 # Modules from python
-
 import time
 import matplotli.pyplot as pl
 import numpy as np
 import multiprocessing as mp
 
 # Modules created 
-
 import parametro
 import auxfunctionsmodule as aux
 import fortransubroutines as fortran

@@ -1,5 +1,9 @@
+# Modules from python
+
 import numpy as np
 import matplotlib.pylab as pl
+
+# Modules created 
 
 import parametro
 import fortransubroutines as fortran
@@ -11,8 +15,7 @@ def readbinaryfile(dim1,dim2,filename):
       Input:
       dim1     = Number of sample of 1st Dimension
       dim2     = Number of sample of 2nd Dimension
-      filename = path of binary file
-      Output:      
+      filename = path of binary file     
       """      
       with open(filename, 'rb') as f:    
             data   = np.fromfile(f, dtype=np.float32, count= dim1*dim2)
@@ -21,7 +24,8 @@ def readbinaryfile(dim1,dim2,filename):
 
 def plotmodel(matrix,colormap):
       """
-      Plot 2D velocity model read from binary file.
+      Plot a 2D velocity model read from binary file.
+
       """      
       pl.figure()
       pl.imshow(matrix,cmap= colormap)
@@ -29,12 +33,14 @@ def plotmodel(matrix,colormap):
       pl.colorbar()
       pl.draw() # drawing figure to be plotted later   
 
-def plotgraphics(ID,filename,color):        
+def plotgraphics(ID,filename,color):  
+
       """    
-      plotgraphics - Function that read a file and plot a graphic.
+      Plotgraphics -> Function that read a file and plot a graphic.
 
       REMEMBER: The function 'np.loadtxt' only can be used with files written
-            with dot               
+            with dot separation
+
             ID = number of columns of the file    
       """      
       if ID == 2:
@@ -57,8 +63,9 @@ def plotgraphics(ID,filename,color):
 
 def amort(fat_amort,n_grid):
 	"""
-	amort - Cria a funcao de amortecimento que vai ser usada nas bordas do modelo e a salva em um arquivo de texto
-	
+	amort -> Creates a damping function that will be used in the Cerjan condition.
+               The function created is saved in a txt file. 
+      
 	"""	
 	w = np.zeros(n_grid)
   
@@ -68,6 +75,13 @@ def amort(fat_amort,n_grid):
 	np.savetxt('f_amort.dat',w, delimiter='.')
 
 def posicao_fonte(Nz,Nx,N_shot,Fx0,Fz0,SpaFonte):
+
+      """
+
+      posicao_fonte -> Creates a damping function that will be used in the Cerjan condition.
+                       The function created is saved in a txt file. 
+
+      """
       
       posicao = np.zeros((N_shot,2))
 
@@ -93,7 +107,11 @@ def modelagemparalela(shot,\
                       regTTM,\
                       sismograma,\
                       modelo,\
-                      nome_prin):      
+                      nome_prin): 
+
+      """
+      This function is responsible for the parallelization of the shots.
+      """
 
       print("Fx =", Fx, "Fz =", Fz, "shot", shot)
       fortran.nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
@@ -108,21 +126,10 @@ def modelagemparalela(shot,\
 
 
 def remove_onda_direta(shot,Fx,Fz,nome_prin):
+
+      """
+      This function is responsible for the parallelization of the direct wave's removal.
+      """
       print("Fx =", Fx, "Fz =", Fz, "shot", shot)
       fortran.removeondadireta(parametro.Nt,parametro.Nx,shot,nome_prin)
       print(" shot= ",shot," Finalizado.")
-
-def square(x,numbers):
- 
-    for x in numbers:
-        print('%s squared  is  %s' % (x, x**2))
-
-def doubler(number):
-    """
-    A doubling function that can be used by a process
-    """
-    import os
-    result = number * 2
-    proc = os.getpid()
-    print('{0} doubled to {1} by process id: {2}'.format(
-        number, result, proc))        

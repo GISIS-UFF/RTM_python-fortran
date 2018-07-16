@@ -1,45 +1,52 @@
-import parametro
+## Modules that will be used in this code
+
+# Modules from python
 import time
 import matplotlib.pyplot as pl
 import numpy as np
 import multiprocessing as mp
 
+# Modules created 
+import parametro
 import auxfunctionsmodule as aux
 import fortransubroutines as fortran
 
+# This variable will tell fortran tha we want to do the modelling of the seismograms
 regTTM = 0
-ID_modelo = 1
 
 start_time = time.time()
 
-# Modelo de Velocidade Usado
+# Velocity Model used 
 C = aux.readbinaryfile(parametro.Nz,parametro.Nx,parametro.modeloreal)
 aux.plotmodel(C,'jet')
 
-# Gera fonte sismica
+# Creates the seismic source
 fortran.wavelet(1,parametro.dt,1,parametro.f_corte) 
 
-# Visualiza pulso sismico
+# Shows the seismic pulse
 aux.plotgraphics(2,'wavelet_ricker.dat', 'k')
 #pl.show()
 
-# Define o numero de amostas da fonte
+# Define the source's samples
 lixo, fonte = np.loadtxt('wavelet_ricker.dat', unpack = True)
 Nfonte      = np.size(fonte)
 
-# Cria camada de amortecimento
+# Creates the damping layer function
 func_amort = aux.amort(parametro.fat,parametro.nat)
 aux.plotgraphics(1,'f_amort.dat','k')
 #pl.show()
 
+# Creates a file with the source positions
 if parametro.gera_pos_fonte: 
     aux.posicao_fonte(parametro.Nz,parametro.Nx,parametro.N_shot,parametro.Fx0,parametro.Fz0,parametro.SpaFonte)
 
-# Carrega posicao da fonte
+# Loads the source position
 Fx, Fz = np.loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
 N_shot = np.size(Fx)
 
 print(N_shot)
+
+# Case 1: Only one shot
 if N_shot == 1:
     print("Fx =", Fx, "Fz =", Fz, "shot",N_shot)
     fortran.nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
@@ -50,8 +57,9 @@ if N_shot == 1:
                                 parametro.nome_prin,\
                                 parametro.zr,)
     print(" shot= ",shot," Finalizado.")
-    
-else: # Se numeros de tiros e maior que 1 use a paralelizacao
+
+# Case 2: More than one shot -> use parallelization   
+else: 
     procs = []    
     for shot in np.arange(0,N_shot):
         proc = mp.Process(target=aux.modelagemparalela, \
