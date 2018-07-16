@@ -1,28 +1,33 @@
-import parametro
+## Modules that will be used in this code
+
+# Modules from python
 import time
 import matplotlib.pyplot as pl
 import numpy as np
 import multiprocessing as mp
 
+# Modules created 
+import parametro
 import auxfunctionsmodule as aux
 import fortransubroutines as fortran
 
-regTTM = 0
+# This variable will tell fortran tha we want to do the modelling of the seismograms
+regTTM = 0 
 
 start_time = time.time()
 
-# Define o numero de amostas da fonte
+# Define the source's samples
 lixo, fonte = np.loadtxt('wavelet_ricker.dat', unpack = True)
 Nfonte      = np.size(fonte)
 
-# Carrega posicao da fonte
+# Loads the source position
 Fx, Fz = np.loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
 N_shot = np.size(Fx)
 
-<<<<<<< HEAD
-=======
+# This part of the script is responsable for the homogeneous seismogram creation
 print("Modelagem com modelo Homogeneo para remover onda direta")
->>>>>>> e536f63d4595aec3a88cd8a43a0fc411c6f481e9
+
+# Case 1: Only one shot
 if N_shot == 1:
     print("Fx =", Fx, "Fz =", Fz, "shot",N_shot)
     fortran.nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
@@ -35,12 +40,10 @@ if N_shot == 1:
 
     print("shot=",shot,"Finalizado")
             
-else: # Se numeros de tiros e maior que 1 use a paralelizacao
+# Case 2: More than one shot -> use parallelization
+else:
     procs = []    
     for shot in np.arange(0,N_shot):
-<<<<<<< HEAD
-        proc = mp.Process(target=aux.modelagemparalela, args=(shot+1,Fx[shot],Fz[shot],fonte,regTTM,parametro.modelocamadadeagua,parametro.sismogramacamadadeagua,parametro.nome_prin))
-=======
         proc = mp.Process(target=aux.modelagemparalela, \
         args=(shot+1,\
         Fx[shot],\
@@ -50,27 +53,28 @@ else: # Se numeros de tiros e maior que 1 use a paralelizacao
         parametro.sismogramacamadadeagua,\
         parametro.modelocamadadeagua,\
         parametro.nome_prin))
->>>>>>> e536f63d4595aec3a88cd8a43a0fc411c6f481e9
         procs.append(proc)
         proc.start()
     
     for proc in procs:
         proc.join()
-<<<<<<< HEAD
+
 
 # Removendo a onda direta
-=======
->>>>>>> e536f63d4595aec3a88cd8a43a0fc411c6f481e9
 
+# This part of the script is responsable for the direct wave removal
 print("Removendo a onda direta")
+
+# Case 1: Only one shot
 if N_shot == 1:
      print("Fx =", Fx, "Fz =", Fz, "shot",N_shot)
      fortran.removeondadireta(parametro.Nt,\
                               parametro.Nx,\
                               N_shot,\
                               parametro.nome_prin)
-            
-else: # Se numeros de tiros e maior que 1 use a paralelizacao
+
+# Case 2: More than one shot -> use parallelization
+else: 
      procs = []    
      for shot in np.arange(0,N_shot):
          proc = mp.Process(target=aux.remove_onda_direta,\
