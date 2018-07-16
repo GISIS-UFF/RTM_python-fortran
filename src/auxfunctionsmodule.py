@@ -77,10 +77,7 @@ def amort(fat_amort,n_grid):
 def posicao_fonte(Nz,Nx,N_shot,Fx0,Fz0,SpaFonte):
 
       """
-
-      posicao_fonte -> Creates a damping function that will be used in the Cerjan condition.
-                       The function created is saved in a txt file. 
-
+      posicao_fonte -> Creates a txt file with the position of the shots.               
       """
       
       posicao = np.zeros((N_shot,2))
@@ -110,7 +107,7 @@ def modelagemparalela(shot,\
                       nome_prin): 
 
       """
-      This function is responsible for the parallelization of the shots.
+      This function is responsible for the parallelization of the shots in the modelling script.
       """
 
       print("Fx =", Fx, "Fz =", Fz, "shot", shot)
@@ -123,7 +120,24 @@ def modelagemparalela(shot,\
                                     parametro.zr,)
       print(" shot= ",shot," Finalizado.")
 
+def migracao_rtm(shot,\
+                 Fx,\
+                 Fz,\
+                 modelo,\
+                 nome_prin):
 
+  """
+  This function is responsible for the parallelization of the shots in the migration script.
+  """
+
+  print("Fx =", Fx, "Fz =", Fz, "shot", shot)
+
+  fortran.migracao(parametro.Nz,parametro.Nx,parametro.Nt,\
+                                parametro.h,parametro.dt,parametro.nat,parametro.zr,\
+                                shot,parametro.shotshow,\
+                                parametro.Nsnap,\
+                                modelo,nome_prin,)
+  print(" shot= ",shot," Finalizado.")
 
 def remove_onda_direta(shot,Fx,Fz,nome_prin):
 

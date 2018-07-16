@@ -16,7 +16,7 @@ modelocamadadeagua = '../modelos_utilizados/velocitymodel_Hmgns_wtrly.bin'
 sismogramaobservado = '../sismograma/'
 sismogramacamadadeagua = '../sismograma_modelo_camada_de_agua/'
 sismogramasemondadireta = '../sismograma_sem_onda_direta/'
-nome_prin          = 'Marmousi_TTM'
+nome_prin          =  'Marmousi'
 caminho_TTM = '../matriz_tempo_transito/'
 caminho_migracao = '../Imagem/' 
 
@@ -27,7 +27,7 @@ Nz         = 141  #500              # Numero de pontos no Grid (z)
 h          = 10                     # Espacamento do Grid
 dt         = 1.0e-04 #5.0e-04       # Incremento de tempo
 gera_pos_fonte = True  	            # Criar arquivo com posições da fonte? (False or True)
-N_shot     = 2                      # Numero total de tiros
+N_shot     = 8                      # Numero total de tiros
 Fx0        = 10                     # Posicao inicial da fonte em X
 Fz0        = 2                      # Posicao inicial da fonte em Z
 SpaFonte   = 30                     # Espacamento entre as posicoes da fonte
