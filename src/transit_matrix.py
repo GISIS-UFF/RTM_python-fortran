@@ -77,10 +77,6 @@ else:
      for proc in procs:
         proc.join()
 
-TTM = aux.readbinaryfile(parametro.Nz,parametro.Nz,'../matriz_tempo_transito/Marmousi_TTM_shot001.bin')
-aux.plotmodel(TTM,'jet')
-pl.show()
-
 elapsed_time_python = time.time() - start_time
 
 print ("Tempo de processamento python = ", elapsed_time_python, "s")
