@@ -2,7 +2,7 @@
 
 # Modules from python
 import time
-import matplotli.pyplot as pl
+import matplotlib.pyplot as pl
 import numpy as np
 import multiprocessing as mp
 
@@ -23,7 +23,7 @@ aux.plotmodel(C, 'jet')
 
 # Create the seismic source
 
-fortran.wavelet(1,paamentro.dt,1,parametro.f_corte)
+fortran.wavelet(1,parametro.dt,1,parametro.f_corte)
 
 # Shows the seismic pulse
 
@@ -55,26 +55,31 @@ print(N_shot)
 
 if N_shot == 1:
      print("Fx =", Fx, "Fz =", Fz, "shot",N_shot)
-    fortran.nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
+     fortran.nucleomodelagem(parametro.Nz,parametro.Nx,parametro.Nt,\
                                 parametro.h,parametro.dt,parametro.nat,\
                                 N_shot,parametro.shotshow,\
                                 Fx,Fz,fonte,parametro.Nsnap,regTTM,\
                                 parametro.modelosuavizado,parametro.caminho_TTM,\
                                 parametro.nome_prin,\
                                 parametro.zr,)
-    print(" shot= ",shot," Finalizado.")
+     print(" shot= ",shot," Finalizado.")
 
 # Case 2: More than one shot -> use parallelization
 
 else:
      procs = []    
-    for shot in np.arange(0,N_shot):
-        proc = mp.Process(target=aux.modelagemparalela, args=(shot+1,Fx[shot],Fz[shot],fonte,regTTM))
+     for shot in np.arange(0,N_shot):
+        proc = mp.Process(target=aux.modelagemparalela, args=(shot+1,Fx[shot],Fz[shot],fonte,regTTM,\
+                          parametro.caminho_TTM,parametro.modelosuavizado,parametro.nome_prin))
         procs.append(proc)
         proc.start()
     
-    for proc in procs:
+     for proc in procs:
         proc.join()
+
+TTM = aux.readbinaryfile(parametro.Nz,parametro.Nz,'../matriz_tempo_transito/Marmousi_TTM_shot001.bin')
+aux.plotmodel(TTM,'jet')
+pl.show()
 
 elapsed_time_python = time.time() - start_time
 
