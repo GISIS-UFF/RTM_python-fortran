@@ -56,7 +56,7 @@ if N_shot == 1:
                                 parametro.modeloreal,parametro.sismogramaobservado,\
                                 parametro.nome_prin,\
                                 parametro.zr,)
-    print(" shot= ",shot," Finalizado.")
+    print(" shot= ",N_shot," Finalizado.")
 
 # Case 2: More than one shot -> use parallelization   
 else: 

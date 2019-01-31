@@ -29,7 +29,7 @@ if N_shot == 1:
                                 N_shot,parametro.shotshow,\
                                 parametro.Nsnap,\
                                 parametro.modelosuavizado,parametro.nome_prin,)
-    print(" shot= ",shot," Finalizado.")
+    print(" shot= ",N_shot," Finalizado.")
 
 # Case 2: More than one shot -> use parallelization   
 else: 
@@ -47,17 +47,6 @@ else:
     
     for proc in procs:
         proc.join()
-
-# Loop to construct the final image
-
-for shot in np.arange(1,N_shot+1):
-            filename_imagem = "../Imagem/Marmousi_shot" + '%03d'%(shot) + ".bin"
-            Imagem  =  aux.readbinaryfile(parametro.Nz,parametro.Nx,filename_imagem)     
-            StackImage = Imagem + StackImage
-
-aux.plotmodel(StackImage,'gray')
-pl.show()
-
 
 elapsed_time_python = time.time() - start_time
 print ("Tempo de processamento python = ", elapsed_time_python, "s")

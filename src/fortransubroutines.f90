@@ -754,7 +754,7 @@ SUBROUTINE ReynoldsEngquistNSG(Nz,Nx,dh,dt,vel,P,Pf)
 END SUBROUTINE ReynoldsEngquistNSG
 
 !***********************************************************************************
-!************************* Trannsit Time Matrix ************************************
+!************************* Transit Time Matrix ************************************
 !***********************************************************************************
 
 SUBROUTINE TransitTimeMatrix(Nz,Nx,k,P,TTM,ATTM)
@@ -956,3 +956,112 @@ CALL Seismogram(Nt,Nx,shot,trim(nome_prin),"../sismograma_sem_onda_direta/",Sism
 
 END SUBROUTINE removeondadireta
  
+
+!***********************************************************************************
+!************************* WAVELET CALCULATION *************************************
+!***********************************************************************************
+
+SUBROUTINE savefinalimage(Nz,Nx,N_shot,select_folder,nome_prin)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! Wavele Ricker Calculation.          
+  ! If you're using NSG operator the Ricker is defined by 2nd    
+  ! derivative of gaussian function. And if you're using
+  ! SSG operator the Ricker is defined by 1st derivative of
+  ! gaussian function.
+  ! INPUT:  
+  ! dtime         = Time increment
+  ! MaxAmp        = Max Amplitude of Source. 
+  ! switch        = Select beewten NSG(1) and SSG(2) and ESG(3) operator 
+  ! freqcut       =  Cut Frequency of wavelet
+  ! 
+  ! OUTPUT: ../analysis_files/wavelet_ricker.dat
+  ! 
+  ! 
+  ! Code Written by Felipe Timoteo
+  !                 Last update: May 15th, 2017
+  !
+  ! Copyright (C) 2017 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
+  !                    Departamento de Geologia e Geofísica
+  !                    Universidade Federal Fluminense
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  IMPLICIT NONE
+
+  
+  INTEGER,INTENT(in)                             :: Nz,Nx,N_shot
+  CHARACTER(LEN=*) ,INTENT(in)                  :: select_folder,nome_prin     !folder  
+  CHARACTER(LEN=3)  :: num_shot
+  REAL, DIMENSION(Nz,Nx)         :: image_in,image_out
+  INTEGER          :: kk,ii,shot
+
+  image_out = 0
+  
+  do shot=1,N_shot
+    write(*,*) "Loading shot",shot
+    write(num_shot,"(i3.3)") shot
+
+    OPEN(11, FILE=trim(select_folder)//trim(nome_prin)//'_shot'//num_shot//'.bin', STATUS='unknown',&
+    &FORM='unformatted',ACCESS='direct', RECL=(Nz*Nx*4))
+    read(11,rec=1) ((image_in(kk,ii),kk=1,Nz),ii=1,Nx)
+    close(11)
+
+    do  ii=1,Nx
+      do  kk=20,Nz
+        image_out(kk,ii) =image_in(kk,ii) + image_out(kk,ii)
+      end do
+    end do
+
+  end do
+
+  OPEN(11, FILE=trim(select_folder)//trim(nome_prin)//'_FinalImage.bin', STATUS='unknown',&
+       &FORM='unformatted',ACCESS='direct', RECL=(Nz*Nx*4))
+    write(11,rec=1) image_out
+  CLOSE(11)
+
+END SUBROUTINE savefinalimage
+
+! SUBROUTINE Laplacian(Nz,Nx,dh,dt,vel,P,Pf)
+! IMPLICIT NONE
+!   INTEGER                                       :: i,j
+!   INTEGER,INTENT(in)                            :: Nx,Nz          !Grid Elements
+!   REAL,DIMENSION(Nz,Nx)                         :: aux_vel
+!   REAL,INTENT(in)                               :: dh,dt
+!   REAL, DIMENSION(Nz,Nx)                        :: vel            ! model
+!   REAL, DIMENSION(Nz,Nx)                        :: P              !Pressure Matrix
+!   REAL, DIMENSION(Nz,Nx)                        :: Pf
+
+!   aux_vel = (vel*vel)*(dt*dt)/(12*(dh*dh))  ! Remove it. Wasting cpu time
+
+!   do i=3,Nx-2
+!      do j=3,Nz-2
+!         !4th order in space and 2nd order in time
+!         Pf(j,i)=2*P(j,i)-Pf(j,i) + aux_vel(j,i)*&
+!              &(-(P(j,i-2) + P(j-2,i) + P(j+2,i) + P(j,i+2)) + & 
+!              &16*(P(j,i-1) + P(j-1,i) + P(j+1,i) + P(j,i+1))- &
+!              &60*P(j,i))
+!      end do
+!   end do
+
+!   !Bounary Condition - 2nd order in space
+!   !Left
+!   i=2
+!   do j=2,Nz-1
+!      Pf(j,i)=2*P(j,i)-Pf(j,i)+aux_vel(j,i)*(P(j,i-1)-2*P(j,i)+P(j,i+1) + P(j-1,i)-2*P(j,i)+P(j+1,i))*12
+!   end do
+!   !Right
+!   i=Nx-1
+!   do j=2,Nz-1
+!      Pf(j,i)=2*P(j,i)-Pf(j,i)+aux_vel(j,i)*(P(j,i-1)-2*P(j,i)+P(j,i+1) + P(j-1,i)-2*P(j,i)+P(j+1,i))*12
+!   end do
+!   !Top
+!   j=2
+!   do i=3,Nx-2
+!      Pf(j,i)=2*P(j,i)-Pf(j,i)+aux_vel(j,i)*(P(j,i-1)-2*P(j,i)+P(j,i+1) + P(j-1,i)-2*P(j,i)+P(j+1,i))*12
+!   end do
+!   !Bottom
+!   j=Nz-1
+!   do i=3,Nx-2
+!      Pf(j,i)=2*P(j,i)-Pf(j,i)+aux_vel(j,i)*(P(j,i-1)-2*P(j,i)+P(j,i+1) + P(j-1,i)-2*P(j,i)+P(j+1,i))*12
+!   end do
+!   RETURN 
+
+! END SUBROUTINE Laplacian
