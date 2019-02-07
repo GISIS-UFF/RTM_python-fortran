@@ -104,7 +104,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
      end if
      
      if (regTTM == 1) then 
-        CALL TransitTimeMatrix(Nz,Nx,k,P(1:Nz,NpCA+1:NpCA+Nx),TTM,ATTM,shot)
+        CALL TransitTimeMatrix(Nz,Nx,k,P(1:Nz,NpCA+1:NpCA+Nx),TTM,ATTM)
      end if
 
   end do
@@ -1019,49 +1019,80 @@ SUBROUTINE savefinalimage(Nz,Nx,N_shot,select_folder,nome_prin)
 
 END SUBROUTINE savefinalimage
 
-! SUBROUTINE Laplacian(Nz,Nx,dh,dt,vel,P,Pf)
-! IMPLICIT NONE
-!   INTEGER                                       :: i,j
-!   INTEGER,INTENT(in)                            :: Nx,Nz          !Grid Elements
-!   REAL,DIMENSION(Nz,Nx)                         :: aux_vel
-!   REAL,INTENT(in)                               :: dh,dt
-!   REAL, DIMENSION(Nz,Nx)                        :: vel            ! model
-!   REAL, DIMENSION(Nz,Nx)                        :: P              !Pressure Matrix
-!   REAL, DIMENSION(Nz,Nx)                        :: Pf
+subroutine laplacian(dim1,dim2,dh,select_folder,filename)
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   ! Laplacian2D - Apply spatial 2nd oreder derivative in 2D array
+   !
+   !             d^2           d^2
+   !nabla^2[f] = ---- f(x,z) + ---- f(x,z)
+   !             dx^2          dz^2
+   !   
+   ! INPUT:       
+   !  dim1       = 1st dimension of the matrix   
+   !  dim2       = 2nd dimension of the matrix
+   !  dh         = spatial increment
+   !  matrix_in  = 2D array input
+   !       
+   ! OUTPUT:  
+   !  matrix_out = 2D array with spatial derivative
+   ! 
+   ! Code Written by Felipe Timoteo
+   !                 Last update: Feb 7th 2019
+   !
+   ! Copyright (C) 2019 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
+   !                    Departamento de Geologia e Geofísica
+   !                    Universidade Federal Fluminense
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   IMPLICIT NONE
+   INTEGER,INTENT(in)                      :: dim1,dim2
+   REAL,INTENT(in)                         :: dh
+   CHARACTER(LEN=*) ,INTENT(in)            :: select_folder,filename     !folder  
+   REAL, DIMENSION(dim1,dim2)              :: matrix_in
+   REAL, DIMENSION(dim1,dim2)              :: matrix_out
+   REAL, DIMENSION(dim1,dim2)              :: Dx_matrix,Dz_matrix
+   INTEGER                                 :: i,j   
 
-!   aux_vel = (vel*vel)*(dt*dt)/(12*(dh*dh))  ! Remove it. Wasting cpu time
+   Dx_matrix =0.0
+   Dz_matrix =0.0    
+   matrix_out=0.0
 
-!   do i=3,Nx-2
-!      do j=3,Nz-2
-!         !4th order in space and 2nd order in time
-!         Pf(j,i)=2*P(j,i)-Pf(j,i) + aux_vel(j,i)*&
-!              &(-(P(j,i-2) + P(j-2,i) + P(j+2,i) + P(j,i+2)) + & 
-!              &16*(P(j,i-1) + P(j-1,i) + P(j+1,i) + P(j,i+1))- &
-!              &60*P(j,i))
-!      end do
-!   end do
+   OPEN(11, FILE=trim(select_folder)//trim(filename)//'.bin',&
+            STATUS='unknown',&
+            FORM='unformatted',&
+            ACCESS='direct',&
+            RECL=(dim1*dim2*4))
+            
+      read(11,rec=1) ((matrix_in(j,i),j=1,dim1),i=1,dim2)
+   close(11)
+   
+   ! Calculates partial derivatives
+   do j=2,dim1-1
+      do i=2,dim2-1
+      Dx_matrix(j,i) = (matrix_in(j,i+1) - 2*matrix_in(j,i) + matrix_in(j,i-1))/(dh*dh); 
+      Dz_matrix(j,i) = (matrix_in(j+1,i) - 2*matrix_in(j,i) + matrix_in(j-1,i))/(dh*dh);                     
+      end do
+   end do
 
-!   !Bounary Condition - 2nd order in space
-!   !Left
-!   i=2
-!   do j=2,Nz-1
-!      Pf(j,i)=2*P(j,i)-Pf(j,i)+aux_vel(j,i)*(P(j,i-1)-2*P(j,i)+P(j,i+1) + P(j-1,i)-2*P(j,i)+P(j+1,i))*12
-!   end do
-!   !Right
-!   i=Nx-1
-!   do j=2,Nz-1
-!      Pf(j,i)=2*P(j,i)-Pf(j,i)+aux_vel(j,i)*(P(j,i-1)-2*P(j,i)+P(j,i+1) + P(j-1,i)-2*P(j,i)+P(j+1,i))*12
-!   end do
-!   !Top
-!   j=2
-!   do i=3,Nx-2
-!      Pf(j,i)=2*P(j,i)-Pf(j,i)+aux_vel(j,i)*(P(j,i-1)-2*P(j,i)+P(j,i+1) + P(j-1,i)-2*P(j,i)+P(j+1,i))*12
-!   end do
-!   !Bottom
-!   j=Nz-1
-!   do i=3,Nx-2
-!      Pf(j,i)=2*P(j,i)-Pf(j,i)+aux_vel(j,i)*(P(j,i-1)-2*P(j,i)+P(j,i+1) + P(j-1,i)-2*P(j,i)+P(j+1,i))*12
-!   end do
-!   RETURN 
+   ! Filling first and last lines
+   Dx_matrix(1,:)    = Dx_matrix(2,:);
+   Dx_matrix(dim1,:) = Dx_matrix(dim1-1,:);
+   Dz_matrix(1,:)    = Dz_matrix(2,:);
+   Dz_matrix(dim1,:) = Dz_matrix(dim1-1,:);
+   !Filling first and last columns
+   Dx_matrix(2:dim1-1,1)    = Dx_matrix(2:dim1-1,2);
+   Dx_matrix(2:dim1-1,dim2) = Dx_matrix(2:dim1-1,dim2-1);
+   Dz_matrix(2:dim1-1,1)    = Dz_matrix(2:dim1-1,2);
+   Dz_matrix(2:dim1-1,dim2) = Dz_matrix(2:dim1-1,dim2-1);
+   
+   !nabla^2
+   do j=1,dim1
+      do i=1,dim2
+         matrix_out(j,i) = Dx_matrix(j,i) + Dz_matrix(j,i)
+      end do
+   end do
 
-! END SUBROUTINE Laplacian
+   OPEN(11, FILE=trim(select_folder)//trim(filename)//'_Laplacian.bin', STATUS='unknown',&
+       &FORM='unformatted',ACCESS='direct', RECL=(dim1*dim2*4))
+    write(11,rec=1) matrix_out
+  CLOSE(11)
+end subroutine laplacian
