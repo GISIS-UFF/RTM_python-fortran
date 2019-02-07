@@ -30,7 +30,6 @@ aux.plotgraphics(2,'wavelet_ricker.dat', 'k')
 
 # Define the source's samples
 lixo, fonte = np.loadtxt('wavelet_ricker.dat', unpack = True)
-Nfonte      = np.size(fonte)
 
 # Creates the damping layer function
 func_amort = aux.amort(parametro.fat,parametro.nat)
@@ -48,7 +47,6 @@ if parametro.gera_pos_fonte:
 
 # Loads the source position
 Fx, Fz = np.loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
-parametro.N_shot = np.size(Fx)
 
 print("Number of shots=",parametro.N_shot)
 
@@ -77,14 +75,14 @@ else:
     # list with shot indices
     shots= np.arange(0,parametro.N_shot)
     num_processor=parametro.processors  
-    # separete the list of shot according with the number
+    # separete the list of shots according to the number
     # of processors    
     for shot_index in np.arange(0,parametro.N_shot,num_processor):
         
         # Run multiprocessing modeling    
         procs = []    
         for shot in shots[shot_index:shot_index+num_processor]:
-            proc = mp.Process(target=aux.modelagemparalela, \
+            proc = mp.Process(target=aux.modelagemparalela,\
             args=(shot+1,\
             Fx[shot],\
             Fz[shot],\
