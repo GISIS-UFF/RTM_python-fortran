@@ -34,15 +34,6 @@ StackImage  =  aux.readbinaryfile(parametro.Nz,parametro.Nx,filename_imagem)
 aux.plotmodel(StackImage,'gray')
 pl.show()
 
-# # Plot final Image using python
-# for shot in np.arange(1,N_shot+1):
-#             filename_imagem = "../Imagem/"'%s'%(parametro.nome_prin)+"_shot" + '%03d'%(shot) + ".bin"
-#             Imagem  =  aux.readbinaryfile(parametro.Nz,parametro.Nx,filename_imagem)     
-#             StackImage = Imagem + StackImage
-
-# aux.plotmodel(StackImage,'gray')
-# pl.show()
-
 elapsed_time_python = time.time() - start_time
 print ("Tempo de processamento python = ", elapsed_time_python, "s")
 

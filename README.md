@@ -2,12 +2,7 @@
 # RTM_python-fortran [![Waffle.io - Columns and their card count](https://badge.waffle.io/GISIS-UFF/RTM_python-fortran.svg?columns=all&style=flat-square)](https://waffle.io/GISIS-UFF/RTM_python-fortran) 
 
 Neste projeto foram abordadas duas técnicas fundamentais do processamento sísmico: A Modelagem
-Sísmica e a Migração Reversa no Tempo (Reverse Time Migration - RTM). A primeira é responsável pela simulação da propagação de ondas, permitindo assim, a inferência das propriedades do meio como a velocidade de propagação e a densidade. Aqui, ela é utilizada em modelos sintéticos para se ter um maior controle do algoritmo de migração criado. A Migração Reversa no Tempo, por sua vez, tem por objetivo, a correção de possíveis distorções que ocorrem na imagem dos recetores em sub-superfície, utilizando dados sísmicos no domínio do tempo e uma condição de imagem. 
-
-O objetivo principal será utilizar um código em Fortran para a execução dos cálculos que exigem grande poder
-de processamento enquanto que o código em Python será responsável pelos elementos visuais e interação com o usuário. 
-
-
+Sísmica e a Migração Reversa no Tempo (Reverse Time Migration - RTM). O objetivo principal será utilizar um código em Fortran para a execução dos cálculos que exigem grande poder de processamento enquanto que o código em Python será responsável pelos elementos visuais e interação com o usuário. 
 
 Esse projeto visa a criação de um ambiente de desenvolvimento para a implementação da técnica Revere Time Migration que utiliza dados sísmicos pré Stack para a criação de uma imagem sísmica em profundidade. 
 
@@ -16,6 +11,7 @@ Esse projeto visa a criação de um ambiente de desenvolvimento para a implement
 fonte: @Caicau
 
 OBS: A migração utiliza a condição de imagem por tempo de excitação.
+
 ### Pré-requisitos 
 
 * Python
@@ -24,9 +20,9 @@ OBS: A migração utiliza a condição de imagem por tempo de excitação.
 
 * Antes de executar o seu programa, verifique/modifique o script "parametro.py" de acordo com a sua necessidade.
 
-* Outra pasta que talvez você queira modificar é "modelos_utilizados", lá você poderá adicionar o seu próprio arquivo com seu modelo em binário.
+* Outra pasta que talvez você queira modificar é a "modelos_utilizados", lá você poderá adicionar o seu próprio arquivo com seu modelo em binário.
 
-* Lembre-se sempre que para realizar a modelagem e a migração você precisará de um modelo real, um modelo suavizado e um modelo homogêneo (apresentando a velocidade da camada de água), todos em binário. Certifique-se de que você possui os três antes de começar. 
+* Lembre-se sempre que para realizar a modelagem e a migração você precisará de um modelo real, um modelo suavizado e um modelo homogêneo (apresentando, normalmente, a velocidade da camada de água), todos em binário. Certifique-se de que você possui os três antes de começar. 
 
 **Na pasta src:**
 
@@ -38,11 +34,21 @@ $ python prepare_fortran_subroutines.py
 
 3º Verifique se o arquivo "fortransubroutines.so" foi criado.
 
-4º No seu terminal (ainda na pasta src) execute o script "programa_imageamento.py"
+4º Antes de realizar a modelagem e/ou a migração, verifique o script "parametro.py". Nele encontram-se todos os parametros necessários para a realização dos demais scripts. Normalmente, você irá mudar o tamanho e os nomes dos modelos.
 
-OBS: Antes de executar este comando abra o script e verifique se você quer realizar tanto a modelagem quanto a migração. Caso o seu interesse seja apenas em um dos dois métodos, certifique-se de comentar o outro no "main" do programa antes de executá-lo.
+5º No seu terminal (ainda na pasta src) execute o script "seismic_modeling.py". Ele é o responsável pela modelagem acústica.
 
-$ python programa_imageamento.py
+$ python seismic_modeling.py
+
+6º Os scripts remove_direct_wave.py e transit_matrix.py são os responsáveis pela remoção da onda direta e pela crição das matrizes de tempo de trânsito, respectivamente. 
+ OBS: Eles devem ser feitos depois que já existir sismogramas do modelo real. E o transit_matrix.py deve ser rodado depois do remove_direct_wave.py
+ 
+$ python remove_direct_wave.py
+$ python transit_matrix.py
+
+7º No seu terminal (ainda na pasta src) execute o script "migration.py". Ele é o responsável pela migração sísmica:
+
+ $ python migration.py
 
 ## Instruções para manter repositório forked atualizado.
 fonte: https://stackoverflow.com/questions/7244321/how-do-i-update-a-github-forked-repository
