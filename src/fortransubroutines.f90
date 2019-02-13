@@ -104,7 +104,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
      end if
      
      if (regTTM == 1) then 
-        CALL TransitTimeMatrix(Nz,Nx,k,P(1:Nz,NpCA+1:NpCA+Nx),TTM,ATTM,shot)
+        CALL TransitTimeMatrix(Nz,Nx,k,P(1:Nz,NpCA+1:NpCA+Nx),TTM,ATTM)
      end if
 
   end do
@@ -754,7 +754,7 @@ SUBROUTINE ReynoldsEngquistNSG(Nz,Nx,dh,dt,vel,P,Pf)
 END SUBROUTINE ReynoldsEngquistNSG
 
 !***********************************************************************************
-!************************* Trannsit Time Matrix ************************************
+!************************* Transit Time Matrix ************************************
 !***********************************************************************************
 
 SUBROUTINE TransitTimeMatrix(Nz,Nx,k,P,TTM,ATTM)
@@ -956,3 +956,143 @@ CALL Seismogram(Nt,Nx,shot,trim(nome_prin),"../sismograma_sem_onda_direta/",Sism
 
 END SUBROUTINE removeondadireta
  
+
+!***********************************************************************************
+!************************* WAVELET CALCULATION *************************************
+!***********************************************************************************
+
+SUBROUTINE savefinalimage(Nz,Nx,N_shot,select_folder,nome_prin)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! Wavele Ricker Calculation.          
+  ! If you're using NSG operator the Ricker is defined by 2nd    
+  ! derivative of gaussian function. And if you're using
+  ! SSG operator the Ricker is defined by 1st derivative of
+  ! gaussian function.
+  ! INPUT:  
+  ! dtime         = Time increment
+  ! MaxAmp        = Max Amplitude of Source. 
+  ! switch        = Select beewten NSG(1) and SSG(2) and ESG(3) operator 
+  ! freqcut       =  Cut Frequency of wavelet
+  ! 
+  ! OUTPUT: ../analysis_files/wavelet_ricker.dat
+  ! 
+  ! 
+  ! Code Written by Felipe Timoteo
+  !                 Last update: May 15th, 2017
+  !
+  ! Copyright (C) 2017 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
+  !                    Departamento de Geologia e Geofísica
+  !                    Universidade Federal Fluminense
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  IMPLICIT NONE
+
+  
+  INTEGER,INTENT(in)                             :: Nz,Nx,N_shot
+  CHARACTER(LEN=*) ,INTENT(in)                  :: select_folder,nome_prin     !folder  
+  CHARACTER(LEN=3)  :: num_shot
+  REAL, DIMENSION(Nz,Nx)         :: image_in,image_out
+  INTEGER          :: kk,ii,shot
+
+  image_out = 0
+  
+  do shot=1,N_shot
+    write(*,*) "Loading shot",shot
+    write(num_shot,"(i3.3)") shot
+
+    OPEN(11, FILE=trim(select_folder)//trim(nome_prin)//'_shot'//num_shot//'.bin', STATUS='unknown',&
+    &FORM='unformatted',ACCESS='direct', RECL=(Nz*Nx*4))
+    read(11,rec=1) ((image_in(kk,ii),kk=1,Nz),ii=1,Nx)
+    close(11)
+
+    do  ii=1,Nx
+      do  kk=20,Nz
+        image_out(kk,ii) =image_in(kk,ii) + image_out(kk,ii)
+      end do
+    end do
+
+  end do
+
+  OPEN(11, FILE=trim(select_folder)//trim(nome_prin)//'_FinalImage.bin', STATUS='unknown',&
+       &FORM='unformatted',ACCESS='direct', RECL=(Nz*Nx*4))
+    write(11,rec=1) image_out
+  CLOSE(11)
+
+END SUBROUTINE savefinalimage
+
+subroutine laplacian(dim1,dim2,dh,select_folder,filename)
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   ! Laplacian2D - Apply spatial 2nd oreder derivative in 2D array
+   !
+   !             d^2           d^2
+   !nabla^2[f] = ---- f(x,z) + ---- f(x,z)
+   !             dx^2          dz^2
+   !   
+   ! INPUT:       
+   !  dim1       = 1st dimension of the matrix   
+   !  dim2       = 2nd dimension of the matrix
+   !  dh         = spatial increment
+   !  matrix_in  = 2D array input
+   !       
+   ! OUTPUT:  
+   !  matrix_out = 2D array with spatial derivative
+   ! 
+   ! Code Written by Felipe Timoteo
+   !                 Last update: Feb 7th 2019
+   !
+   ! Copyright (C) 2019 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
+   !                    Departamento de Geologia e Geofísica
+   !                    Universidade Federal Fluminense
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   IMPLICIT NONE
+   INTEGER,INTENT(in)                      :: dim1,dim2
+   REAL,INTENT(in)                         :: dh
+   CHARACTER(LEN=*) ,INTENT(in)            :: select_folder,filename     !folder  
+   REAL, DIMENSION(dim1,dim2)              :: matrix_in
+   REAL, DIMENSION(dim1,dim2)              :: matrix_out
+   REAL, DIMENSION(dim1,dim2)              :: Dx_matrix,Dz_matrix
+   INTEGER                                 :: i,j   
+
+   Dx_matrix =0.0
+   Dz_matrix =0.0    
+   matrix_out=0.0
+
+   OPEN(11, FILE=trim(select_folder)//trim(filename)//'.bin',&
+            STATUS='unknown',&
+            FORM='unformatted',&
+            ACCESS='direct',&
+            RECL=(dim1*dim2*4))
+            
+      read(11,rec=1) ((matrix_in(j,i),j=1,dim1),i=1,dim2)
+   close(11)
+   
+   ! Calculates partial derivatives
+   do j=2,dim1-1
+      do i=2,dim2-1
+      Dx_matrix(j,i) = (matrix_in(j,i+1) - 2*matrix_in(j,i) + matrix_in(j,i-1))/(dh*dh); 
+      Dz_matrix(j,i) = (matrix_in(j+1,i) - 2*matrix_in(j,i) + matrix_in(j-1,i))/(dh*dh);                     
+      end do
+   end do
+
+   ! Filling first and last lines
+   Dx_matrix(1,:)    = Dx_matrix(2,:);
+   Dx_matrix(dim1,:) = Dx_matrix(dim1-1,:);
+   Dz_matrix(1,:)    = Dz_matrix(2,:);
+   Dz_matrix(dim1,:) = Dz_matrix(dim1-1,:);
+   !Filling first and last columns
+   Dx_matrix(2:dim1-1,1)    = Dx_matrix(2:dim1-1,2);
+   Dx_matrix(2:dim1-1,dim2) = Dx_matrix(2:dim1-1,dim2-1);
+   Dz_matrix(2:dim1-1,1)    = Dz_matrix(2:dim1-1,2);
+   Dz_matrix(2:dim1-1,dim2) = Dz_matrix(2:dim1-1,dim2-1);
+   
+   !nabla^2
+   do j=1,dim1
+      do i=1,dim2
+         matrix_out(j,i) = Dx_matrix(j,i) + Dz_matrix(j,i)
+      end do
+   end do
+
+   OPEN(11, FILE=trim(select_folder)//trim(filename)//'_Laplacian.bin', STATUS='unknown',&
+       &FORM='unformatted',ACCESS='direct', RECL=(dim1*dim2*4))
+    write(11,rec=1) matrix_out
+  CLOSE(11)
+end subroutine laplacian

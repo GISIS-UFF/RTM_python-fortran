@@ -18,7 +18,7 @@ def readbinaryfile(dim1,dim2,filename):
       filename = path of binary file     
       """      
       with open(filename, 'rb') as f:    
-            data   = np.fromfile(f, dtype=np.float32, count= dim1*dim2)
+            data   = np.fromfile(filename, dtype= np.float32, count= dim1*dim2)
             matrix = np.reshape(data, [dim1,dim2], order='F')
       return matrix
 
