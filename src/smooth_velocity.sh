@@ -32,7 +32,7 @@
 #------------------------------------------------
 
 dh=10 #$1     # dt in seismic unix is in microsecond 
-dh=`python -c "print float('$dh')*float('1.0e3')"`
+dh=`python -c "print( float('$dh')*float('1.0e3'))"`
 
 # number of points of model
 Nz=141 #$2       #501
@@ -48,9 +48,10 @@ echo $Nz
 echo $s_factor
 
 # Path Folder of Model
-pathfolder=../Models_true 
+pathfolder=../modelos_utilizados 
 filename_input=marmousi_vp_383x141
-filename_output=SmoothedModel$s_factor
+sufixname=_SmoothedModel$s_factor
+filename_output=$filename_input$sufixname
 
 filename_output_brute=velocitymodel_inputmodel
 indata=$pathfolder/$filename_input.bin
@@ -82,8 +83,10 @@ smooth2 < tmp2 n1=$Nz n2=$Nx r1=$s_factor r2=$s_factor |\
     xbox=1200 ybox=10 wbox=$Wplot hbox=$Hplot cmap=hsv2 \
     legend=1 label1="depth (km)" label2="distance (m)" &
 
-# mv $indata $outdatabrute
-
+echo ""
+echo ""
+echo "Saving Smoothed model on: $outdata"
+echo ""
 rm -f tmp*
 
 exit
