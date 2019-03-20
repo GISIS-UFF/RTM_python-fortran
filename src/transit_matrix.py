@@ -23,6 +23,7 @@ aux.plotmodel(C, 'jet')
 
 # Create the seismic source
 
+#parametro.f_corte = 20
 fortran.wavelet(1,parametro.dt,1,parametro.f_corte)
 
 # Shows the seismic pulse

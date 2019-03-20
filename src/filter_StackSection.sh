@@ -37,47 +37,103 @@
 
 #Plot Parameters
 Wplot=1800       # Width of plot (pixels)
-Hplot=900       # Height of plot (pixels)
+Hplot=900        # Height of plot (pixels)
+plotymax=150     # max y direction
 
-plotymax=50 # y axis limit (frequency spectrum)
 
-# Data Parameters
-indata=../Imagem/Marmousi_FinalImage.bin
+# Data Input
+indata=../imagens_artigo/MarmousiRTMTT_MigrateddataStack.bin
 
-#indata=../Models_true/velocitymodel.bin
-Nz=141
-dh=10
-
-# sample rate in micro in SU # 
-sampling=`python -c "print(float('$dh')*float('1.0e3'))"`
+Nz=281     # number of samples of 1st dimension (z direction or time)
+dh=10.0e3  # sample rate (dt or dh)
 
 # Cut Frequency
-f_cut=6
-f_cut_max=30
+f_cut=5
+f_cut_max=45
+d_fcut=3    # shift at begininng and end of the filter
 
-# End of filter taper   
-d_fcut=5
-
-sufix=_SUfilter_
+       
+sufix=_Bandpass_
 Hz=Hz
+# Data Output
 outdata=$indata$sufix$f_cut-$f_cut_max$Hz.bin
 
+#########################################################
 #plot Migrated Seismic Section
-suaddhead < $indata ns=$Nz | suchw key1=dt a=$sampling |\
-            suximage  perc=98 title="Migrated Seismic Section" legend=1 units=" Amplitude  "\
-            xbox=10 ybox=10 wbox=$Wplot hbox=$Hplot  legend=1 label1="Depth (km)" label2="Lenth (m)" &
+suaddhead < $indata ns=$Nz |                     # add to binary SU header
+            suchw key1=dt a=$dh |                # add to header sample rate
+            suximage  perc=98 \
+            title="Migrated Seismic Section" \
+            legend=1 units=" Amplitude  "\
+            xbox=10 ybox=10 wbox=$Wplot\
+            hbox=$Hplot  legend=1 \
+            # label1="Depth (km)"\
+            # label2="Lenth (m)" &                 # generate plot
 
-#plot Filtered Frequency Spectrum of Migrated Seismic Section
-suaddhead < $indata ns=$Nz | suchw key1=dt a=$sampling |           
-           sufilter f=$f_cut,$(($f_cut+$d_fcut)),$(($f_cut_max-$d_fcut)),$f_cut_max amps=0.,1.,1.,0.| #BANDPASS FILTER           
-           #sufilter f=$(($f_cut-$d_fcut)),$f_cut amps=1.,0.| #LOWPASS FILTER             
-           suspecfx | #suop op=norm | #SHOW AMPLITUDE SPECTRUM  
-           suximage  perc=98 title="Frequency Spectrum of Migrated Seismic Section with band filter with $f_cut and $f_cut_max Hz" \
-           xbox=10 ybox=10 wbox=$Wplot hbox=$Hplot  \
-           legend=1 label1="Depth (km)" label2="Lenth (m)"&# cmap=hsv2 &
+#########################################################
+#plot Frequency Spectrum of Migrated Seismic Section
+suaddhead < $indata ns=$Nz |               # add to binary SU header
+            suchw key1=dt a=$dh |          # add to header sample rate
+            suspecfx |                     # calculates amplitude spectrum 
+            suop op=norm |                 # improve visualization (normalize)
+            #suwind tmin=0 tmax=$plotymax| # limit the data window visualizations
+            suximage  perc=98 \
+            title="Frequency Spectrum of Migrated Seismic Section" \
+            xbox=10 ybox=10 wbox=$Wplot \
+            hbox=$Hplot  \
+            # legend=1 label1="Depth (km)" \
+            # label2="Lenth (m)" \
+            cmap=hsv2 &                    # generate plot
 
+# #########################################################
+# #plot Migrated Seismic Section - LOW PASS
+# suaddhead < $indata ns=$Nz |               # add to binary SU header
+#             suchw key1=dt a=$dh |          # add to header sample rate
+#             sufilter f=$(($f_cut-$d_fcut)),$f_cut amps=1.,0.| # apply filter
+#             suximage  perc=98 \
+#             title="Migrated Seismic Section with lowpass filter of $f_cut Hz" \
+#             xbox=10 ybox=10 wbox=$Wplot\
+#             hbox=$Hplot  legend=1\
+#             label1="Depth (km)" \
+#             label2="Lenth (m)" &           # generate plot
+
+# #########################################################
+# #plot Filtered Frequency Spectrum of Migrated Seismic Section   - LOW PASS
+# suaddhead < $indata ns=$Nz |               # add to binary SU header
+#             suchw key1=dt a=$dh |          # add to header sample rate
+#             sufilter f=$(($f_cut-$d_fcut)),$f_cut amps=1.,0.| # apply filter 
+#             suspecfx |                     # calculates amplitude spectrum 
+#             suop op=norm |                 # improve visualization (normalize)
+#             #suwind tmin=0 tmax=$plotymax| # limit the data window visualizations
+#             suximage  perc=98 title="Frequency Spectrum of Migrated Seismic Section with lowpass filter of $f_cut Hz" \
+#             xbox=10 ybox=10 wbox=$Wplot hbox=$Hplot  \
+#             legend=1 label1="Depth (km)" label2="Lenth (m)" cmap=hsv2 & # generate plot
+
+# #########################################################
+# #plot Migrated Seismic Section    - BAND PASS
+# suaddhead < $indata ns=$Nz |               # add to binary SU header
+#             suchw key1=dt a=$dh |          # add to header sample rate
+#             sufilter f=$(($f_cut-$d_fcut)),$f_cut,$f_cut_max,$(($f_cut_max+$d_fcut)) amps=0.,1.,1.,0.| # apply filter
+#             suximage  perc=98 \
+#             title="Migrated Seismic Section with band filter with $f_cut and $f_cut_max Hz" \
+#             xbox=10 ybox=10 wbox=$Wplot\
+#             hbox=$Hplot  legend=1\
+#             label1="Depth (km)" \
+#             label2="Lenth (m)" &           # generate plot
+#             #sustrip > $outdata
+            
+# #########################################################
+# #plot Filtered Frequency Spectrum of Migrated Seismic Section    - BAND PASS
+# suaddhead < $indata ns=$Nz |               # add to binary SU header
+#             suchw key1=dt a=$dh |          # add to header sample rate
+#             sufilter f=$(($f_cut-$d_fcut)),$f_cut,$f_cut_max,$(($f_cut_max+$d_fcut)) amps=0.,1.,1.,0.| # apply filter 
+#             suspecfx |                     # calculates amplitude spectrum 
+#             suop op=norm |                 # improve visualization (normalize)
+#             #suwind tmin=0 tmax=$plotymax| # limit the data window visualizations
+#             suximage  perc=98 title="Frequency Spectrum of Migrated Seismic Section with band filter with $f_cut and $f_cut_max Hz" \
+#             xbox=10 ybox=10 wbox=$Wplot hbox=$Hplot  \
+#             legend=1 label1="Depth (km)" label2="Lenth (m)" cmap=hsv2 & # generate plot
 
 echo "***********************"
 echo "Normal end of Execution"
 echo "***********************"
-

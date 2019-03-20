@@ -1005,7 +1005,7 @@ SUBROUTINE savefinalimage(Nz,Nx,N_shot,select_folder,nome_prin)
     close(11)
 
     do  ii=1,Nx
-      do  kk=20,Nz
+      do  kk=18,Nz
         image_out(kk,ii) =image_in(kk,ii) + image_out(kk,ii)
       end do
     end do
@@ -1068,19 +1068,19 @@ subroutine laplacian(dim1,dim2,dh,select_folder,filename)
    ! Calculates partial derivatives
    do j=2,dim1-1
       do i=2,dim2-1
-      Dx_matrix(j,i) = (matrix_in(j,i+1) - 2*matrix_in(j,i) + matrix_in(j,i-1))/(dh*dh); 
+      !Dx_matrix(j,i) = (matrix_in(j,i+1) - 2*matrix_in(j,i) + matrix_in(j,i-1))/(dh*dh); 
       Dz_matrix(j,i) = (matrix_in(j+1,i) - 2*matrix_in(j,i) + matrix_in(j-1,i))/(dh*dh);                     
       end do
    end do
 
    ! Filling first and last lines
-   Dx_matrix(1,:)    = Dx_matrix(2,:);
-   Dx_matrix(dim1,:) = Dx_matrix(dim1-1,:);
+   ! Dx_matrix(1,:)    = Dx_matrix(2,:);
+   ! Dx_matrix(dim1,:) = Dx_matrix(dim1-1,:);
    Dz_matrix(1,:)    = Dz_matrix(2,:);
    Dz_matrix(dim1,:) = Dz_matrix(dim1-1,:);
    !Filling first and last columns
-   Dx_matrix(2:dim1-1,1)    = Dx_matrix(2:dim1-1,2);
-   Dx_matrix(2:dim1-1,dim2) = Dx_matrix(2:dim1-1,dim2-1);
+   ! Dx_matrix(2:dim1-1,1)    = Dx_matrix(2:dim1-1,2);
+   ! Dx_matrix(2:dim1-1,dim2) = Dx_matrix(2:dim1-1,dim2-1);
    Dz_matrix(2:dim1-1,1)    = Dz_matrix(2:dim1-1,2);
    Dz_matrix(2:dim1-1,dim2) = Dz_matrix(2:dim1-1,dim2-1);
    

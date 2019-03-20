@@ -10,7 +10,7 @@ import auxfunctionsmodule as aux
 import fortransubroutines as fortran
 
 
-
+start_time = time.time()
 # plot Stack image generated in fortran
 filename_imagem = parametro.caminho_migracao + parametro.nome_prin + "_FinalImage.bin"
 StackImage  =  aux.readbinaryfile(parametro.Nz,parametro.Nx,filename_imagem)     
@@ -30,3 +30,6 @@ Laplacian  =  aux.readbinaryfile(parametro.Nz,parametro.Nx,filename_imagem)
 
 aux.plotmodel(Laplacian,'gray')
 pl.show()
+
+elapsed_time_python = time.time() - start_time
+print ("Tempo de processamento python = ", elapsed_time_python, "s")
