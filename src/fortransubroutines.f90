@@ -1096,3 +1096,25 @@ subroutine laplacian(dim1,dim2,dh,select_folder,filename)
     write(11,rec=1) matrix_out
   CLOSE(11)
 end subroutine laplacian
+
+subroutine taper(x)
+
+   IMPLICIT NONE
+
+   REAL                            :: pi
+   INTEGER                         :: i,x 
+   REAL, DIMENSION(x)              :: vector,vector_cos
+
+   pi = 4 * atan(1.0)
+   do i = 1,x
+
+      vector(i) = (i-1)*(pi/x)
+      vector_cos(i) = cos(vector(i))/2 + 0.5
+      
+   end do
+
+OPEN(11, FILE='taper.dat', STATUS='unknown',&
+       &FORM='formatted')
+    write(11,*) vector_cos
+CLOSE(11)
+end subroutine taper

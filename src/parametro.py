@@ -17,6 +17,7 @@ sismogramasemondadireta = '../sismograma_sem_onda_direta/'
 
 caminho_TTM = '../matriz_tempo_transito/'
 caminho_migracao = '../Imagem/' 
+caminho_mute = '../Mute/'
 
 # Parameters 
 nome_prin               = 'Marmousi_v2'
@@ -37,7 +38,9 @@ nat	       = 80 	     # Numero de pontos do Grid que farao parte da camada de am
 T   	   = 6       	 # Tempo final
 Nt	       = int(T/dt) + 1 # Numero de amostras
 beta	   = 4	         # Parametro de estabilidade
-alfa	   = 3   # Parametro de dispersao
+alfa	   = 3           # Parametro de dispersao
 shotshow   = 0           # Tiro para snapshot (0 nao gera snapshot)
 Nsnap      = 20          # Numero de Snapshots 
 zr         = 2           # Profundidade dos receptores
+taper      = 50
+                                                          
