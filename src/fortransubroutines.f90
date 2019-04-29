@@ -994,7 +994,7 @@ SUBROUTINE savefinalimage(Nz,Nx,N_shot,select_folder,nome_prin)
   INTEGER          :: kk,ii,shot
 
   image_out = 0
-  
+
   do shot=1,N_shot
     write(*,*) "Loading shot",shot
     write(num_shot,"(i3.3)") shot
@@ -1005,7 +1005,7 @@ SUBROUTINE savefinalimage(Nz,Nx,N_shot,select_folder,nome_prin)
     close(11)
 
     do  ii=1,Nx
-      do  kk=18,Nz
+      do  kk=18,Nz 
         image_out(kk,ii) =image_in(kk,ii) + image_out(kk,ii)
       end do
     end do
@@ -1097,18 +1097,18 @@ subroutine laplacian(dim1,dim2,dh,select_folder,filename)
   CLOSE(11)
 end subroutine laplacian
 
-subroutine taper(x)
+subroutine taper(n_taper)
 
    IMPLICIT NONE
 
    REAL                            :: pi
-   INTEGER                         :: i,x 
-   REAL, DIMENSION(x)              :: vector,vector_cos
+   INTEGER                         :: i,n_taper 
+   REAL, DIMENSION(n_taper)        :: vector,vector_cos
 
    pi = 4 * atan(1.0)
-   do i = 1,x
+   do i = 1,n_taper
 
-      vector(i) = (i-1)*(pi/x)
+      vector(i) = (i-1)*(pi/n_taper)
       vector_cos(i) = cos(vector(i))/2 + 0.5
       
    end do
