@@ -39,7 +39,7 @@ Nz=141 #$2       #501
 Nx=383 #$3       #1201
 
 # Smooth Factor
-s_factor=20 #$4 #100
+s_factor=80 #$4 #100
 
 # Check Input Parameters
 echo $dh

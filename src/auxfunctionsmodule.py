@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pylab as pl
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Modules created 
 
@@ -19,19 +20,31 @@ def readbinaryfile(dim1,dim2,filename):
       """      
       with open(filename, 'rb') as f:    
             data   = np.fromfile(filename, dtype= np.float32, count= dim1*dim2)
-            matrix = np.reshape(data, [dim1,dim2], order='F')
-      return matrix
+            data = np.reshape(data, [dim1,dim2], order='F')
+      return data
 
 def plotmodel(matrix,colormap):
       """
       Plot a 2D velocity model read from binary file.
 
       """      
-      pl.figure()
-      pl.imshow(matrix,cmap= colormap)
 
-      pl.colorbar()
-      pl.draw() # drawing figure to be plotted later   
+      pl.figure()
+      ax = pl.gca()
+      im = pl.imshow(matrix,cmap= colormap)
+
+    # create an axes on the right side of ax. The width of cax will be 5%
+    # # of ax and the padding between cax and ax will be fixed at 0.05 inch.
+      divider = make_axes_locatable(ax)
+      cax = divider.append_axes("right", size="5%", pad=0.05)
+
+      pl.colorbar(im, cax=cax)
+      pl.draw() # drawing figure to be plotted later 
+      #pl.figure()
+      #pl.imshow(matrix,cmap= colormap)
+
+      #pl.colorbar()
+      #pl.draw() # drawing figure to be plotted later   
 
 def plotgraphics(ID,filename,color):  
 
