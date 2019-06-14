@@ -17,6 +17,11 @@ regTTM = 0
 
 start_time = time.time()
 
+# Velocity Model used 
+C = aux.readbinaryfile(parametro.Nz,parametro.Nx,parametro.modelocamadadeagua)
+aux.plotmodel(C,'jet')
+
+
 # Define the source's samples
 lixo, fonte = np.loadtxt('wavelet_ricker.dat', unpack = True)
 Nfonte      = np.size(fonte)

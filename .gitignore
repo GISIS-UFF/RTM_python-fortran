@@ -103,5 +103,11 @@ ENV/
 # Coisas que ignoro
 
 sismograma/*
+Imagem/*
+matriz_tempo_transito/*
+sismograma_modelo_camada_de_agua/*
+sismograma_sem_onda_direta/*
+modelos_utilizados/*
+snapshot/*
 *~
 *.dat

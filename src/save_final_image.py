@@ -20,12 +20,21 @@ StackImage = np.zeros((parametro.Nz,parametro.Nx)) # variable responsible for st
 Fx, Fz = np.loadtxt('posicoes_fonte.dat',dtype = 'int',unpack = True)
 N_shot = np.size(Fx)
 
+# Parameters of mute applied in each migrated shot image
+Ndamper_tapermute = 20 
+width_tapermute   = 100
+mute_water_layer  = 36
+
 # Generate binary with final image
 fortran.savefinalimage(parametro.Nz,\
                        parametro.Nx,\
                        parametro.N_shot,\
+                       Ndamper_tapermute,\
+                       width_tapermute,\
+                       mute_water_layer,\
                        parametro.caminho_migracao,\
-                       parametro.nome_prin)
+                       parametro.nome_prin,\
+                       Fx)
 
 # plot Stack image generated in fortran
 filename_imagem = "../Imagem/"'%s'%(parametro.nome_prin)+"_FinalImage.bin"

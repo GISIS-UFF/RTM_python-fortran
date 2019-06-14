@@ -73,7 +73,6 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
 
   CALL   LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,trim(caminho_modelo),vel)
  
-  
   P    = 0.0                   !Pressure field
   Pf   = 0.0                   !Pressure field in future  
 
@@ -83,7 +82,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
         P(Nsz,Nsx + NpCA)= P(Nsz,Nsx+NpCA) - fonte(k) ! NpCA para o modelo expandido
      end if
 
-     CALL operador_quarta_ordem(Nzz,Nxx,dh,dt,vel,P,Pf)
+     CALL operador_quarta_ordem(Nzz,Nxx,dh,dt,vel,P,Pf)    
 
      CALL Updatefield(Nzz,Nxx,P,Pf)
 
@@ -97,9 +96,10 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
        Seism(k,:) = P(zr,NpCA+1:NpCA+Nx)
      end if 
      
-     if ((mod(k,aux)==0)  .and. shotshow > 0 .and. shotshow == shot .and. regTTM == 1) then 
+     if ((mod(k,aux)==0)  .and. shotshow > 0 .and. shotshow == shot) then 
 
-        CALL snap(Nzz,Nxx,count_snap,shotshow,trim(nome_prin),"../snapshot/",P(1:Nz,NpCA+1:NpCA+Nx))
+         print*, "snap shot =",shotshow, "time step = ",k
+         CALL snap(Nz,Nx,count_snap,shotshow,trim(nome_prin),"../snapshot/",P(1:Nz,NpCA+1:NpCA+Nx))
         
      end if
      
@@ -198,8 +198,8 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo,no
        CALL ImagingConditionMaxAmP(k,Nz,Nx,P(1:Nz,NpCA+1:NpCA+Nx),TTM,Imagem)
        
       if ( (mod(k,aux)==0)  .and. shotshow > 0 .and. shotshow == shot) then 
-
-         CALL snap(Nzz,Nxx,count_snap,shotshow,"Marmousi","../snapshot_migracao_rtm/",P(1:Nz,NpCA+1:NpCA+Nx))
+         print*, "snap shot =",shotshow, "time step = ",k
+         CALL snap(Nz,Nx,count_snap,shotshow,"Marmousi","../snapshot_migracao_rtm/",P(1:Nz,NpCA+1:NpCA+Nx))
          
      end if
 
@@ -958,23 +958,12 @@ END SUBROUTINE removeondadireta
  
 
 !***********************************************************************************
-!************************* WAVELET CALCULATION *************************************
+!************************* Save final migrated image *************************************
 !***********************************************************************************
 
-SUBROUTINE savefinalimage(Nz,Nx,N_shot,select_folder,nome_prin)
+SUBROUTINE savefinalimage(Nz,Nx,N_shot,Ndamper,width,mute_water,select_folder,nome_prin,shot_xposition,N)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  ! Wavele Ricker Calculation.          
-  ! If you're using NSG operator the Ricker is defined by 2nd    
-  ! derivative of gaussian function. And if you're using
-  ! SSG operator the Ricker is defined by 1st derivative of
-  ! gaussian function.
-  ! INPUT:  
-  ! dtime         = Time increment
-  ! MaxAmp        = Max Amplitude of Source. 
-  ! switch        = Select beewten NSG(1) and SSG(2) and ESG(3) operator 
-  ! freqcut       =  Cut Frequency of wavelet
-  ! 
-  ! OUTPUT: ../analysis_files/wavelet_ricker.dat
+  !
   ! 
   ! 
   ! Code Written by Felipe Timoteo
@@ -987,16 +976,20 @@ SUBROUTINE savefinalimage(Nz,Nx,N_shot,select_folder,nome_prin)
   IMPLICIT NONE
 
   
-  INTEGER,INTENT(in)                             :: Nz,Nx,N_shot
-  CHARACTER(LEN=*) ,INTENT(in)                  :: select_folder,nome_prin     !folder  
-  CHARACTER(LEN=3)  :: num_shot
-  REAL, DIMENSION(Nz,Nx)         :: image_in,image_out
+  INTEGER,INTENT(in)                             :: Nz,Nx,N_shot,N
+  INTEGER,INTENT(in)                             :: Ndamper,width,mute_water
+  CHARACTER(LEN=*) ,INTENT(in)                   :: select_folder,nome_prin     !folder  
+  CHARACTER(LEN=3)                               :: num_shot
+  INTEGER,DIMENSION(N),INTENT(in)                :: shot_xposition
+  REAL, DIMENSION(Nz,Nx)                         :: image_in,image_out
+  REAL, DIMENSION(Nz,Nx)                         :: image_in_mute
   INTEGER          :: kk,ii,shot
 
   image_out = 0
 
-  do shot=1,N_shot
-    write(*,*) "Loading shot",shot
+  do shot=1,N_shot    
+    write(*,*) "Loading shot   ",shot
+    write(*,*) "shot  position ",shot_xposition(shot)
     write(num_shot,"(i3.3)") shot
 
     OPEN(11, FILE=trim(select_folder)//trim(nome_prin)//'_shot'//num_shot//'.bin', STATUS='unknown',&
@@ -1004,9 +997,11 @@ SUBROUTINE savefinalimage(Nz,Nx,N_shot,select_folder,nome_prin)
     read(11,rec=1) ((image_in(kk,ii),kk=1,Nz),ii=1,Nx)
     close(11)
 
+    CALL ApplyTaper(Nz,Nx,Ndamper,shot_xposition(shot),width,image_in,image_in_mute)
+
     do  ii=1,Nx
-      do  kk=18,Nz 
-        image_out(kk,ii) =image_in(kk,ii) + image_out(kk,ii)
+      do  kk=mute_water,Nz 
+        image_out(kk,ii) =image_in_mute(kk,ii) + image_out(kk,ii)
       end do
     end do
 
@@ -1118,3 +1113,80 @@ OPEN(11, FILE='taper.dat', STATUS='unknown',&
     write(11,*) vector_cos
 CLOSE(11)
 end subroutine taper
+
+subroutine ApplyTaper(dim1,dim2,Ndamper,center,width,matrix_in,matrix_out)
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   ! ApplyTapper - Apply taper to attenuate the artifacts of the 
+   !               RTM images. This subroutine must to be apply in
+   !               each shot image
+   !
+   !           plato
+   ! 1        ________
+   !         /        \
+   ! 0 _____/          \______
+   !   
+   ! INPUT:       
+   !  dim1       = 1st dimension of the matrix   
+   !  dim2       = 2nd dimension of the matrix
+   !  Ndamper    = Number of samples of tamper function (cossine)
+   !  center     = Center of taper
+   !  width      = width of plato
+   !  matrix_in  = 2D array input
+   !       
+   ! OUTPUT:  
+   !  matrix_out = 2D array with spatial derivative
+   ! 
+   ! Code Written by Felipe Timoteo
+   !                 Last update: May 17th 2019
+   !
+   ! Copyright (C) 2019 Grupo de Imageamento Sísmico e Inversão Sísmica (GISIS)
+   !                    Departamento de Geologia e Geofísica
+   !                    Universidade Federal Fluminense
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   IMPLICIT NONE
+   INTEGER,INTENT(in)                      :: dim1,dim2                 
+   INTEGER,INTENT(in)                      :: Ndamper,center,width
+   REAL, DIMENSION(dim1,dim2),INTENT(in)   :: matrix_in
+   REAL, DIMENSION(dim1,dim2),INTENT(out)  :: matrix_out
+   
+   INTEGER                                 :: i,j  
+   INTEGER                                 :: plato_ini,plato_end
+
+   REAL,DIMENSION(Ndamper)                 :: damper
+   REAL,DIMENSION(dim2)                    :: mute
+   REAL,DIMENSION(3*dim2)                  :: mute_adjust
+   REAL                                    :: pi
+   pi = 4 * atan(1.0)
+   
+   mute        = 0.0
+   mute_adjust = 0.0      
+
+   plato_ini = dim2 + center - width/2
+   plato_end = dim2 + center + width/2
+   
+   if ((plato_ini-Ndamper+1 >1) .and. (plato_end+Ndamper<3*dim2)) then
+      ! Created cossine damper
+      do i=1,Ndamper
+         damper(i) =  cos( (i-1)*pi/Ndamper )/2 + 0.5
+      end do
+      
+      mute_adjust(plato_ini:plato_end)              = 1      ! plato      
+      mute_adjust(plato_ini:plato_ini-Ndamper+1:-1) = damper ! left damping
+      mute_adjust(plato_end+1:plato_end+Ndamper)    = damper ! right damping
+
+      mute = mute_adjust(dim2:2*dim2-1)  ! Take care the limits of model
+
+      do j=1,dim1
+         matrix_out(j,:) = matrix_in(j,:)*mute
+      end do
+   else
+      print*,''
+      print*,'...............................................'
+      print*,'The taper exceeds the limits of model. Dont applied the taper'
+      print*,'Reduce the plato width or the damper length'
+      print*,'...............................................'
+      print*,''         
+      matrix_out = 0.0
+   end if
+   return
+end subroutine ApplyTaper
