@@ -109,5 +109,6 @@ sismograma_modelo_camada_de_agua/*
 sismograma_sem_onda_direta/*
 modelos_utilizados/*
 snapshot/*
+snapshot_migracao_rtm/*
 *~
 *.dat

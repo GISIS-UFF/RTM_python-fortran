@@ -79,7 +79,7 @@ SUBROUTINE nucleomodelagem(Nz,Nx,Nt,dh,dt,NpCA,shot,shotshow,NSx,NSz,fonte,Nfont
   do k=1,Nt
 
      if (k <= Nfonte) then        !Nts=nint(tm/dt)+1!number of source time elements
-        P(Nsz,Nsx + NpCA)= P(Nsz,Nsx+NpCA) - fonte(k) ! NpCA para o modelo expandido
+        P(NSz,NSx + NpCA)= P(NSz,NSx+NpCA) - fonte(k) ! NpCA para o modelo expandido
      end if
 
      CALL operador_quarta_ordem(Nzz,Nxx,dh,dt,vel,P,Pf)    
@@ -175,9 +175,7 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo,no
   Imagem = 0.0
   count_snap = 0
 
-
-  aux = Nsnap
-  aux = Nt/aux              ! evaluate number of snapshots
+  aux = Nt/Nsnap              ! evaluate number of snapshots
 
   do k = Nt,1,-1
      do j=1,Nx
@@ -208,6 +206,156 @@ SUBROUTINE migracao(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,Nsnap,caminho_modelo,no
        CALL writematrix(Nz,Nx,shot,Imagem,trim(nome_prin),"../Imagem/")
 
 END SUBROUTINE migracao
+
+
+
+
+!***********************************************************************************
+!************************* Migracao ************************************************
+!***********************************************************************************  
+
+
+
+SUBROUTINE migracaocrosscorrelation(Nz,Nx,Nt,dh,dt,NpCA,zr,shot,shotshow,NSx,NSz,fonte,Nfonte,&
+                                    Nsnap,caminho_modelo,nome_prin)
+
+   IMPLICIT NONE  
+ 
+   INTEGER                        :: k,aux,j
+   INTEGER                        :: Nzz,Nxx                     !Expanded dimensions
+   CHARACTER(len=256)             :: caminho_modelo
+   CHARACTER(len=256),INTENT(in)  :: nome_prin
+ 
+   INTEGER,INTENT(in)             :: Nsnap
+   INTEGER                        :: count_snap
+   INTEGER,INTENT(in)             :: shot,shotshow,NSx,NSz,Nfonte! Related source
+   INTEGER,INTENT(in)             :: Nx,Nz,Nt,NpCA                    ! Grid Elements
+ 
+   REAL,DIMENSION(NpCA)           :: func_Am 
+   INTEGER,INTENT(in)             :: zr                         ! Condition Transit Time Matrix
+ 
+   REAL,DIMENSION(Nfonte)         :: fonte                            ! Source  
+ 
+   REAL,INTENT(in)                 :: dh,dt                                                         
+   REAL,DIMENSION(Nt,Nx)           :: Seism                             
+   REAL,ALLOCATABLE,DIMENSION(:,:) :: P,Pf,vel,Imagem   
+   
+   ! Used to storage in memory the pressure field to CrossCorrelation
+  Integer                          :: k_resamp_cc
+  Integer                          :: resamp_factor_cc, Nt_resamp_cc
+  REAL                             :: dt_resamp_cc,Tf
+  REAL,ALLOCATABLE,DIMENSION(:,:,:):: P_descendant
+  ! Used to storage in memory the pressure field to CrossCorrelation
+                
+    
+   Nxx = NpCA + Nx + NpCA
+   Nzz = Nz + NpCA
+
+   ! Resamping to save space when register descendant field
+   k_resamp_cc      = 1
+   resamp_factor_cc = 20
+   dt_resamp_cc     = resamp_factor_cc*dt   ! 4 ms
+   Tf               = (Nt-1)*dt
+   Nt_resamp_cc     = Nint(Tf/dt_resamp_cc) + 1
+   
+   ALLOCATE(P(Nzz,Nxx))
+   ALLOCATE(Pf(Nzz,Nxx))
+   ALLOCATE(vel(Nzz,Nxx))
+   ALLOCATE(Imagem(Nz,Nx))
+   ALLOCATE(P_descendant(Nz,Nx,Nt_resamp_cc))  
+ 
+   ! Load Damping Function
+   open(20,file='f_amort.dat',&
+        status='unknown',form='formatted')
+   do k=1,NpCA
+      read(20,*)func_Am(k)
+   end do
+   close(20)
+ 
+ ! Abrindo o Modelo Suavizado, Sismograma sem a onda direta e a Matriz de Tempo de Transito
+ 
+   CALL  LoadVelocityModelExpanded(Nz,Nzz,Nx,Nxx,NpCA,trim(caminho_modelo),vel)
+   
+   P            = 0.0                   !Pressure field
+   Pf           = 0.0                   !Pressure field in future 
+   P_descendant = 0.0
+   Seism        = 0.0
+   aux = Nt/Nsnap              ! evaluate number of snapshots
+   
+   ! Modeling to registering de descendant wavefield used in cross correlation
+   do k=1,Nt
+      if (k <= Nfonte) then        !Nts=nint(tm/dt)+1!number of source time elements
+         P(NSz,NSx + NpCA)= P(NSz,NSx+NpCA) - fonte(k) ! NpCA para o modelo expandido
+      end if
+ 
+      CALL operador_quarta_ordem(Nzz,Nxx,dh,dt,vel,P,Pf)    
+ 
+      CALL Updatefield(Nzz,Nxx,P,Pf)
+ 
+      CALL CerjanNSG(Nzz,Nxx,NpCA,func_Am,P,Pf)            
+ 
+      CALL ReynoldsEngquistNSG(Nzz,Nxx,dh,dt,vel,P,Pf)
+ 
+      if ((mod(k,aux)==0)  .and. shotshow > 0 .and. shotshow == shot) then 
+ 
+          print*, "snap shot =",shotshow, "time step = ",k
+          CALL snap(Nz,Nx,count_snap,shotshow,trim(nome_prin),"../snapshot/",P(1:Nz,NpCA+1:NpCA+Nx))
+         
+      end if
+
+      ! Register descendant field with sample rate = resamp_factor*dt                 
+      If (Mod(k-1,resamp_factor_cc) == 0 .or. (k==1)) then
+         P_descendant(:,:,k_resamp_cc) = P(1:Nz,NpCA+1:NpCA+Nx)
+         k_resamp_cc  = k_resamp_cc + 1
+      End If
+
+   end do   
+   
+   
+   CALL  LoadSeismogram(Nt,Nx,shot,trim(nome_prin),"../sismograma_sem_onda_direta/",Seism)
+   !CALL  LoadTTM(Nz,Nx,shot,trim(nome_prin),'../matriz_tempo_transito/',TTM)
+ 
+   P    = 0.0                   !Pressure field
+   Pf   = 0.0                   !Pressure field in future  
+   Imagem = 0.0
+   count_snap = 0
+ 
+ 
+   aux = Nsnap
+   aux = Nt/aux              ! evaluate number of snapshots
+ 
+   ! Reverse modeling to create ascendent wavefield and apply image condition
+   do k = Nt,1,-1
+      do j=1,Nx !Injecting the Seismogram
+         P(zr,j+NpCA) =  Seism(k,j) + P(zr,j+NpCA)
+      end do
+ 
+        CALL operador_quarta_ordem(Nzz,Nxx,dh,dt,vel,P,Pf)
+ 
+        CALL Updatefield(Nzz,Nxx,P,Pf)
+ 
+        CALL CerjanNSG(Nzz,Nxx,NpCA,func_Am,P,Pf)            
+ 
+        CALL ReynoldsEngquistNSG(Nzz,Nxx,dh,dt,vel,P,Pf)
+        
+        If (Mod(k-1,resamp_factor_cc) == 0 .or. (k==1)) then
+            k_resamp_cc  = k_resamp_cc - 1
+            CALL ImagingConditionCrossCorr(Nz,Nx,P_descendant(:,:,k_resamp_cc),P(1:Nz,NpCA+1:NpCA+Nx),Imagem)
+        End If
+
+         if ( (mod(k,aux)==0)  .and. shotshow > 0 .and. shotshow == shot) then 
+            print*, "snap shot =",shotshow, "time step = ",k
+            CALL snap(Nz,Nx,count_snap,shotshow,"Marmousi","../snapshot_migracao_rtm/",P(1:Nz,NpCA+1:NpCA+Nx))
+            
+         end if
+ 
+   end do
+
+   DEALLOCATE(P_descendant)  
+
+   CALL writematrix(Nz,Nx,shot,Imagem,trim(nome_prin),"../Imagem/")
+ 
+ END SUBROUTINE migracaocrosscorrelation
 
 !***********************************************************************************
 !************************* 4nd ORDER OPERATOR IN SPACE******************************
@@ -901,6 +1049,29 @@ SUBROUTINE ImagingConditionMaxAmP(k,Nz,Nx,P,TTM,Image)
 
   RETURN
 END SUBROUTINE ImagingConditionMaxAmP
+
+
+  !***********************************************************************************
+  !!**************************** IMAGING CONDITION ***********************************
+  !***********************************************************************************
+SUBROUTINE ImagingConditionCrossCorr(Nz,Nx,P_descendant,P_ascendant,Image)
+   IMPLICIT NONE
+   INTEGER                              :: i,j
+
+   INTEGER,INTENT(in)                   :: Nx,Nz
+   REAL,DIMENSION(Nz,Nx),INTENT(in)     :: P_descendant,P_ascendant
+   REAL,DIMENSION(Nz,Nx),INTENT(inout)  :: Image
+
+   ! Dont calculate Imgage Condition in water layer
+   do i = 1,Nx       
+      do j = 1,Nz
+         Image(j,i) = Image(j,i) + P_descendant(j,i) * P_ascendant(j,i)
+      end do             
+   end do
+
+   RETURN
+ END SUBROUTINE ImagingConditionCrossCorr
+
 
 
 !***********************************************************************************
