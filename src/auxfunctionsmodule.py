@@ -139,18 +139,50 @@ def migracao_rtm(shot,\
                  modelo,\
                  nome_prin):
 
-  """
-  This function is responsible for the parallelization of the shots in the migration script.
-  """
+      """
+      This function is responsible for the parallelization of the shots in the migration script.
+      """
 
-  print("Fx =", Fx, "Fz =", Fz, "shot", shot)
+      print("Fx =", Fx, "Fz =", Fz, "shot", shot)
 
-  fortran.migracao(parametro.Nz,parametro.Nx,parametro.Nt,\
-                                parametro.h,parametro.dt,parametro.nat,parametro.zr,\
-                                shot,parametro.shotshow,\
-                                parametro.Nsnap,\
-                                modelo,nome_prin,)
-  print(" shot= ",shot," Finalizado.")
+      fortran.migracao(parametro.Nz,parametro.Nx,parametro.Nt,\
+                                    parametro.h,parametro.dt,parametro.nat,parametro.zr,\
+                                    shot,parametro.shotshow,\
+                                    parametro.Nsnap,\
+                                    modelo,nome_prin,)
+      print(" shot= ",shot," Finalizado.")
+
+def migracao_crosscorrelation(\
+            shot,
+            Fx,\
+            Fz,\
+            fonte,\
+            modelo,\
+            nome_prin):
+
+      """
+      This function is responsible for the parallelization of the shots in the migration script.
+      """
+      print("Fx =", Fx, "Fz =", Fz, "shot",shot)
+      fortran.migracaocrosscorrelation(\
+                        parametro.Nz,\
+                        parametro.Nx,\
+                        parametro.Nt,\
+                        parametro.h,\
+                        parametro.dt,\
+                        parametro.nat,\
+                        parametro.zr,\
+                        shot,\
+                        parametro.shotshow,\
+                        Fx,\
+                        Fz,\
+                        fonte,\
+                        parametro.Nsnap,\
+                        parametro.modelosuavizado,\
+                        parametro.nome_prin,)
+                        
+      print(" shot= ",parametro.N_shot," Finalizado.")
+
 
 def remove_onda_direta(shot,Fx,Fz,nome_prin):
 
